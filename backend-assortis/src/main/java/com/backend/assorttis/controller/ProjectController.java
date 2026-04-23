@@ -61,6 +61,12 @@ public class ProjectController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ProjectListDTO>> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+
     @GetMapping("/kpis")
     public ResponseEntity<ProjectKPIsDTO> getKPIs() {
         return ResponseEntity.ok(projectService.getKPIs());

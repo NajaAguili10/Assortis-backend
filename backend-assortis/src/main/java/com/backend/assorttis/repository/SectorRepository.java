@@ -10,4 +10,6 @@ public interface SectorRepository extends JpaRepository<Sector, Long>, JpaSpecif
 
     Optional<Sector> findByCode(String code);
 
+    Optional<Sector> findByName(String name);
+
 }

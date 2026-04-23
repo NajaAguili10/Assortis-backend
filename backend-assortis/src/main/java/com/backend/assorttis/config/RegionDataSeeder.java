@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @RequiredArgsConstructor
-@Order(6)
+@Order(4)
 public class RegionDataSeeder implements CommandLineRunner {
 
     private final RegionRepository regionRepository;

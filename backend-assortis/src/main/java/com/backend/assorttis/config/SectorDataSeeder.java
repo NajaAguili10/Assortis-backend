@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @RequiredArgsConstructor
-@Order(4)
+@Order(2)
 public class SectorDataSeeder implements CommandLineRunner {
 
     private final SectorRepository sectorRepository;
