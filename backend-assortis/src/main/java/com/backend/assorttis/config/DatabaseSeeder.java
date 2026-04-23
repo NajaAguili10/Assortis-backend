@@ -17,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
 
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
