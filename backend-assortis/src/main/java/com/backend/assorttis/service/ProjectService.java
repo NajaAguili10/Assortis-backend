@@ -8,7 +8,7 @@ public interface ProjectService {
 
     PaginatedResponseDTO<ProjectListDTO> getProjects(ProjectFiltersDTO filters, String sortBy, Pageable pageable);
 
-    List<ProjectListDTO> getAllProjects();
+
 
     ProjectKPIsDTO getKPIs();
 

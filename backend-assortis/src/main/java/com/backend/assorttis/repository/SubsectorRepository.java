@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface SubsectorRepository extends JpaRepository<Subsector, Long>, JpaSpecificationExecutor<Subsector> {
     Optional<Subsector> findByCode(String subCode);
+    java.util.List<Subsector> findBySectorId(Long sectorId);
 }
