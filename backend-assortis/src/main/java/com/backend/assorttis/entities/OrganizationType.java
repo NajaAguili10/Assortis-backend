@@ -24,6 +24,8 @@ public class OrganizationType {
 
     private String label;
 
+    private String description;
+
     @Id
     @Size(max = 50)
     @Column(name = "code", nullable = false, length = 50)
@@ -36,6 +38,11 @@ public class OrganizationType {
     @Column(name = "label", nullable = false, length = 100)
     public String getLabel() {
         return label;
+    }
+
+    @Column(name = "description", length = Integer.MAX_VALUE)
+    public String getDescription() {
+        return description;
     }
 
 }

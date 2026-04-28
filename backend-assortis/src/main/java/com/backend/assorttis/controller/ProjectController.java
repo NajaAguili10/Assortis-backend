@@ -61,6 +61,8 @@ public class ProjectController {
         return ResponseEntity.ok(result);
     }
 
+
+
     @GetMapping("/kpis")
     public ResponseEntity<ProjectKPIsDTO> getKPIs() {
         return ResponseEntity.ok(projectService.getKPIs());

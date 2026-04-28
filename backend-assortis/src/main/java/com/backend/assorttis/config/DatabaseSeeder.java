@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -15,7 +16,9 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Order(1)
 public class DatabaseSeeder implements CommandLineRunner {
+
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;

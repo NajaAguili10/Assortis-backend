@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @RequiredArgsConstructor
-@Order(2)
+@Order(5)
 public class TenderDataSeeder implements CommandLineRunner {
 
     private final CountryRepository countryRepository;
@@ -85,35 +85,9 @@ public class TenderDataSeeder implements CommandLineRunner {
         }
 
         // Secteurs (ID numérique, assignation manuelle)
-        if (sectorRepository.count() == 0) {
-            createSector("EDUCATION", "Education");
-            createSector("HEALTH", "Health");
-            createSector("AGRICULTURE", "Agriculture");
-            createSector("INFRASTRUCTURE", "Infrastructure");
-            createSector("GOVERNANCE", "Governance");
-            createSector("ENVIRONMENT", "Environment");
-            createSector("WATER_SANITATION", "Water & Sanitation");
-            createSector("ENERGY", "Energy");
-            createSector("GENDER", "Gender");
-            createSector("HUMAN_RIGHTS", "Human Rights");
-            createSector("YOUTH", "Youth");
-            createSector("EMERGENCY_RESPONSE", "Emergency Response");
-        }
 
         // Sous-secteurs (ID numérique, assignation manuelle)
-        if (subsectorRepository.count() == 0) {
-            Sector education = sectorRepository.findByCode("EDUCATION").orElseThrow();
-            Sector health = sectorRepository.findByCode("HEALTH").orElseThrow();
-            Sector agriculture = sectorRepository.findByCode("AGRICULTURE").orElseThrow();
 
-            createSubsector(education, "PRIMARY_EDUCATION", "Primary Education");
-            createSubsector(education, "SECONDARY_EDUCATION", "Secondary Education");
-            createSubsector(education, "HIGHER_EDUCATION", "Higher Education");
-            createSubsector(health, "PRIMARY_HEALTHCARE", "Primary Healthcare");
-            createSubsector(health, "MATERNAL_HEALTH", "Maternal Health");
-            createSubsector(agriculture, "CROP_PRODUCTION", "Crop Production");
-            createSubsector(agriculture, "LIVESTOCK", "Livestock");
-        }
     }
 
     private TenderStatus createTenderStatus(String code, String label) {

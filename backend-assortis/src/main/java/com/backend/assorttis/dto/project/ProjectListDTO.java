@@ -8,41 +8,47 @@ import java.util.List;
 @Data
 public class ProjectListDTO {
     private Long id;
+    private String referenceCode;
     private String code;
     private String title;
+    private String name; // Alias for title
     private String description;
     private String status;
     private String priority;
     private String type;
 
     // Location
-    private String country;
-    private String region; // déjà présent dans Project
+    private CountryDTO country;
+    private CityDTO city;
+    private String region;
 
     // Sector
-    private String sector; // mainSector name
-    private List<String> subsectors; // list of subsector names
+    private SectorDTO mainSector;
+    private List<String> subsectors;
 
     // Budget
-    private ProjectBudgetDTO budget; // inner class
+    private ProjectBudgetDTO budget;
+    private String currency;
+
+    // Organization
+    private DonorDTO donor;
+    private String fundingType;
+    private String leadOrganization;
+    private List<String> partners;
+    private Integer teamSize;
 
     // Timeline
     private ProjectTimelineDTO timeline;
-
-    // Organisation
-    private String leadOrganization; // name of lead org
-    private List<String> partners; // names of partner orgs
-    private Integer teamSize;
+    private String startDate; // ISO String
+    private String endDate;   // ISO String
 
     // Tasks stats
     private Integer tasksCompleted;
     private Integer totalTasks;
 
-    // Dates
-    private LocalDate createdDate;   // from createdAt? Project has updatedAt but no createdDate; we can use createdAt from an audit field if available. For now we might omit or derive.
-    private LocalDate updatedDate;   // from updatedAt
+    // Audit
+    private String updatedAt; // ISO String
 
-    // inner DTOs
     @Data
     public static class ProjectBudgetDTO {
         private BigDecimal total;
@@ -55,7 +61,35 @@ public class ProjectListDTO {
     public static class ProjectTimelineDTO {
         private LocalDate startDate;
         private LocalDate endDate;
-        private Integer duration; // in months
-        private Integer completionPercentage; // 0-100
+        private Integer duration;
+        private Integer completionPercentage;
+    }
+
+    @Data
+    public static class CountryDTO {
+        private Long id;
+        private String name;
+        private String code;
+    }
+
+    @Data
+    public static class CityDTO {
+        private Long id;
+        private String name;
+    }
+
+    @Data
+    public static class SectorDTO {
+        private Long id;
+        private String name;
+        private String code;
+    }
+
+    @Data
+    public static class DonorDTO {
+        private Long id;
+        private String name;
+        private String shortName;
+        private String type;
     }
 }
