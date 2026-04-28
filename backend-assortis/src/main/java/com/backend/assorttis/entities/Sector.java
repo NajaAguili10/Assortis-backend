@@ -34,8 +34,8 @@ public class Sector {
         return id;
     }
 
-    @Size(max = 50)
-    @Column(name = "code", length = 50)
+    @Size(max = 255) // au lieu de 50
+    @Column(name = "code", length = 255)
     public String getCode() {
         return code;
     }
