@@ -11,9 +11,10 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-
+import com.backend.assorttis.enums.CourseLanguage;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @NoArgsConstructor
 @Getter
@@ -25,39 +26,31 @@ import java.time.Instant;
         @Index(name = "idx_courses_certification_available", columnList = "certification_available")
 })
 public class Cours {
+
     private Long id;
-
     private String title;
-
     private String description;
-
     private Expert expert;
-
     private Integer durationHours;
-
     private String level;
-
     private BigDecimal price;
-
     private String currency;
-
     private Boolean isFree;
-
     private String status;
-
     private String thumbnailUrl;
-
     private Instant createdAt;
 
     private Boolean certificationAvailable;
-
     private BigDecimal certificationPrice;
-
     private String certificationTitle;
-
     private String certificationIssuer;
-
     private Integer certificationValidityMonths;
+
+    private String deliveryMode;
+    private Integer modulesCount;
+    private LocalDate startDate;
+    private CourseLanguage courseLanguage;
+    private String tags;
 
     @Id
     @Column(name = "id", nullable = false)
@@ -159,4 +152,33 @@ public class Cours {
         return certificationValidityMonths;
     }
 
+    @Size(max = 50)
+    @ColumnDefault("'ONLINE'")
+    @Column(name = "delivery_mode", length = 50)
+    public String getDeliveryMode() {
+        return deliveryMode;
+    }
+
+    @ColumnDefault("0")
+    @Column(name = "modules_count")
+    public Integer getModulesCount() {
+        return modulesCount;
+    }
+
+    @Column(name = "start_date")
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'EN'")
+    @Column(name = "course_language", length = 10)
+    public CourseLanguage getCourseLanguage() {
+        return courseLanguage;
+    }
+
+    @Column(name = "tags", length = Integer.MAX_VALUE)
+    public String getTags() {
+        return tags;
+    }
 }
