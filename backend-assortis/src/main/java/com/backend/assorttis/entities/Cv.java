@@ -11,7 +11,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.type.SqlTypes;
-
 import java.time.Instant;
 import java.util.Map;
 
@@ -24,28 +23,20 @@ import java.util.Map;
 @Table(name = "cvs", schema = "public")
 public class Cv {
     private Long id;
-
     private Expert expert;
-
     private Language language;
-
     private Integer version;
-
     private String content;
-
     private String fileUrl;
-
     private Map<String, Object> parsedData;
-
     private Map<String, Object> extractedContacts;
-
     private Boolean validated;
-
     private User validatedBy;
-
     private Instant validatedAt;
-
     private Instant createdAt;
+
+    // Nouveau champ : format du CV
+    private CvFormat cvFormat;
 
     @Id
     @Column(name = "id", nullable = false)
@@ -118,4 +109,15 @@ public class Cv {
         return createdAt;
     }
 
+    // Nouvelle relation ManyToOne vers CvFormat
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cv_format_code", referencedColumnName = "code")
+    public CvFormat getCvFormat() {
+        return cvFormat;
+    }
+
+    public Cv setCvFormat(CvFormat cvFormat) {
+        this.cvFormat = cvFormat;
+        return this;
+    }
 }
