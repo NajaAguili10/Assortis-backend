@@ -94,7 +94,13 @@ public class ExpertEducation {
     }
     // Dans ExpertEducation.java, ajouter :
     private EducationDegree degreeType;
+    private EducationSubject educationSubject;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "education_subject_id")
+    public EducationSubject getEducationSubject() {
+        return educationSubject;
+    }
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "degree_type_id")
     public EducationDegree getDegreeType() {
