@@ -1,7 +1,6 @@
 package com.backend.assorttis.controller;
 
 import com.backend.assorttis.dto.organization.OrganizationDTO;
-import com.backend.assorttis.dto.organization.OrganizationFiltersDataDTO;
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
 import com.backend.assorttis.service.OrganizationService;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +27,4 @@ public class OrganizationController {
         return organizationService.getKPIs();
     }
 
-    @GetMapping("/filters")
-    public OrganizationFiltersDataDTO getFiltersData() {
-        return organizationService.getFiltersData();
-    }
 }
