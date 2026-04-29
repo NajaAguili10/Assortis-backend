@@ -92,5 +92,12 @@ public class ExpertEducation {
     public Integer getGraduationYear() {
         return graduationYear;
     }
+    // Dans ExpertEducation.java, ajouter :
+    private EducationDegree degreeType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "degree_type_id")
+    public EducationDegree getDegreeType() {
+        return degreeType;
+    }
 }
