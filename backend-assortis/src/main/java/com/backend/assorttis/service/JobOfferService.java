@@ -5,6 +5,7 @@ import com.backend.assorttis.dto.joboffer.JobOfferResponseDTO;
 import com.backend.assorttis.entities.JobOffer;
 import com.backend.assorttis.entities.Organization;
 import com.backend.assorttis.entities.Project;
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
 import com.backend.assorttis.repository.JobApplicationRepository;
 import com.backend.assorttis.repository.JobOfferRepository;
 import com.backend.assorttis.repository.OrganizationRepository;
@@ -107,7 +108,7 @@ public class JobOfferService {
                 .orElseGet(() -> projectRepository.save(
                         new Project()
                                 .setTitle(projectTitle)
-                                .setStatus("ACTIVE")
+                                .setStatus(ProjectStatus.valueOf("ACTIVE"))
                                 .setUpdatedAt(Instant.now())
                 ));
     }

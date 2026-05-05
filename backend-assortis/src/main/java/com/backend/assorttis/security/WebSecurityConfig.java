@@ -68,7 +68,7 @@ public class WebSecurityConfig {
                 Arrays.asList("http://localhost:5173", "http://localhost:5182", "http://localhost:5183"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-auth-token", "Accept", "Origin"));
-        configuration.setExposedHeaders(List.of("Authorization", "x-auth-token"));
+        configuration.setExposedHeaders(List.of("Authorization", "x-auth-token", "Content-Disposition"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
