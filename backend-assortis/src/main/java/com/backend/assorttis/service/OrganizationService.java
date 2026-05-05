@@ -1,13 +1,15 @@
 package com.backend.assorttis.service;
 
 import com.backend.assorttis.dto.organization.OrganizationDTO;
-import com.backend.assorttis.dto.organization.OrganizationFiltersDataDTO;
+
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
 import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
 import com.backend.assorttis.entities.OrganizationSavedSearch;
 import com.backend.assorttis.entities.User;
 import com.backend.assorttis.mappers.OrganizationMapper;
 import com.backend.assorttis.repository.*;
+import com.backend.assorttis.repository.OrganizationRepository;
+import com.backend.assorttis.repository.PartnershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +29,12 @@ public class OrganizationService {
     private final SubsectorRepository subsectorRepository;
     private final RegionRepository regionRepository;
     private final CountryRepository countryRepository;
+<<<<<<< HEAD
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
+=======
+    private final PartnershipRepository partnershipRepository;
+>>>>>>> 66b2d4ca5426974a81727f99a790270272d2e64d
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
@@ -41,16 +47,19 @@ public class OrganizationService {
     public OrganizationKPIsDTO getKPIs() {
         long total = organizationRepository.count();
         long active = organizationRepository.countByIsActiveTrue();
+        // Assuming verified means validation_status is 'verified' or validated is true
         long verified = organizationRepository.countByValidatedTrue();
         long countries = organizationRepository.countDistinctCountry();
+        long partnerships = partnershipRepository.count();
+        long newPartnerships = partnershipRepository.countByStatusIgnoreCase("pending");
 
         return OrganizationKPIsDTO.builder()
                 .totalOrganizations(total)
                 .activeOrganizations(active)
                 .verifiedOrganizations(verified)
                 .countriesCovered(countries)
-                .partnerships(0)
-                .newPartnerships(0)
+                .partnerships(partnerships)
+                .newPartnerships(newPartnerships)
                 .invitations(0)
                 .pendingInvitations(0)
                 .build();

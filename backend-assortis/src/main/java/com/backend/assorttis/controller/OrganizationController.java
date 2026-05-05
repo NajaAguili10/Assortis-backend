@@ -1,7 +1,6 @@
 package com.backend.assorttis.controller;
 
 import com.backend.assorttis.dto.organization.OrganizationDTO;
-import com.backend.assorttis.dto.organization.OrganizationFiltersDataDTO;
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
 import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
 import com.backend.assorttis.service.OrganizationService;
@@ -28,6 +27,7 @@ public class OrganizationController {
         return organizationService.getKPIs();
     }
 
+<<<<<<< HEAD
    /* @GetMapping("/filters")
     public OrganizationFiltersDataDTO getFiltersData() {
         return organizationService.getFiltersData();
@@ -35,4 +35,6 @@ public class OrganizationController {
 
 */
 
+=======
+>>>>>>> 66b2d4ca5426974a81727f99a790270272d2e64d
 }
