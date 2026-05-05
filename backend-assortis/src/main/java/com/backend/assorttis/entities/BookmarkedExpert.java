@@ -10,7 +10,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "bookmarked_experts")
+@Table(name = "bookmarked_experts", schema = "public")
 public class  BookmarkedExpert {
     @EmbeddedId
     private BookmarkedExpertId id;

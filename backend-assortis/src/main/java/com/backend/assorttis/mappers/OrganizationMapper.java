@@ -1,11 +1,44 @@
 package com.backend.assorttis.mappers;
 
+import com.backend.assorttis.dto.organization.OrganizationCertificationDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
-import com.backend.assorttis.entities.Organization;
+import com.backend.assorttis.dto.sector.SubsectorDTO;
+import com.backend.assorttis.entities.*;
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
+import com.backend.assorttis.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public class OrganizationMapper {
+
+    private final ProjectOrganizationRepository projectOrganizationRepository;
+    private final ProjectRepository projectRepository;
+    private final OrganizationSectorRepository organizationSectorRepository;
+    private final OrganizationSubsectorRepository organizationSubsectorRepository;
+    private final PartnershipRepository partnershipRepository;
+    private final OrganizationCertificationRepository organizationCertificationRepository;
+    private final TeamMemberRepository teamMemberRepository;
+
+    @Autowired
+    public OrganizationMapper(ProjectOrganizationRepository projectOrganizationRepository,
+                              ProjectRepository projectRepository,
+                              OrganizationSectorRepository organizationSectorRepository,
+                              OrganizationSubsectorRepository organizationSubsectorRepository,
+                              PartnershipRepository partnershipRepository,
+                              OrganizationCertificationRepository organizationCertificationRepository,
+                              TeamMemberRepository teamMemberRepository) {
+        this.projectOrganizationRepository = projectOrganizationRepository;
+        this.projectRepository = projectRepository;
+        this.organizationSectorRepository = organizationSectorRepository;
+        this.organizationSubsectorRepository = organizationSubsectorRepository;
+        this.partnershipRepository = partnershipRepository;
+        this.organizationCertificationRepository = organizationCertificationRepository;
+        this.teamMemberRepository = teamMemberRepository;
+    }
 
     public OrganizationDTO toDTO(Organization organization) {
         if (organization == null) {
@@ -50,21 +83,23 @@ public class OrganizationMapper {
         dto.setContactTitle(organization.getContactTitle());
 
         // Country Mapping
+        OrganizationDTO.CountryDTO countryDTO = new OrganizationDTO.CountryDTO();
         if (organization.getCountry() != null) {
-            OrganizationDTO.CountryDTO countryDTO = new OrganizationDTO.CountryDTO();
             countryDTO.setId(organization.getCountry().getId());
             countryDTO.setName(organization.getCountry().getName());
             countryDTO.setCode(organization.getCountry().getCode());
-            dto.setCountry(countryDTO);
-        }
+        } 
+        dto.setCountry(countryDTO);
 
         // City Mapping
+        OrganizationDTO.CityDTO cityDTO = new OrganizationDTO.CityDTO();
         if (organization.getCity() != null) {
-            OrganizationDTO.CityDTO cityDTO = new OrganizationDTO.CityDTO();
             cityDTO.setId(organization.getCity().getId());
             cityDTO.setName(organization.getCity().getName());
-            dto.setCity(cityDTO);
+        } else {
+            cityDTO.setName("N/A");
         }
+        dto.setCity(cityDTO);
 
         // Parent Mapping
         if (organization.getParent() != null) {
@@ -92,6 +127,121 @@ public class OrganizationMapper {
         }
         dto.setCreatedAt(organization.getCreatedAt());
         dto.setUpdatedAt(organization.getUpdatedAt());
+
+        try {
+            List<ProjectOrganization> pos = projectOrganizationRepository.findAll();
+            List<ProjectOrganization> orgProjectOrgs = pos.stream()
+                .filter(po -> po.getOrganization() != null && po.getOrganization().getId().equals(organization.getId()))
+                .toList();
+
+            long activeCount = orgProjectOrgs.stream()
+                .map(po -> po.getProject())
+                .filter(p -> p != null && ProjectStatus.ACTIVE.equals(p.getStatus()))
+                .count();
+            dto.setActiveProjects(activeCount);
+
+            long completedCount = orgProjectOrgs.stream()
+                .map(po -> po.getProject())
+                .filter(p -> p != null && ProjectStatus.COMPLETED.equals(p.getStatus()))
+                .count();
+            dto.setCompletedProjects(completedCount);
+
+            BigDecimal totalBudget = orgProjectOrgs.stream()
+                .map(po -> po.getProject())
+                .filter(p -> p != null && p.getBudget() != null)
+                .map(p -> p.getBudget())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            dto.setBudget(totalBudget);
+        } catch (Exception e) {
+            dto.setActiveProjects(0L);
+            dto.setCompletedProjects(0L);
+            dto.setBudget(BigDecimal.ZERO);
+        }
+
+        try {
+            List<Partnership> partnerships = partnershipRepository.findAll();
+            long count = partnerships.stream()
+                .filter(p -> (p.getOrganization() != null && p.getOrganization().getId().equals(organization.getId())) ||
+                             (p.getPartnerOrganization() != null && p.getPartnerOrganization().getId().equals(organization.getId())))
+                .count();
+            dto.setPartnerships(count);
+        } catch (Exception e) {
+            dto.setPartnerships(0L);
+        }
+
+        try {
+            List<OrganizationCertification> certs = organizationCertificationRepository.findAll();
+            List<OrganizationCertificationDTO> certDtos = certs.stream()
+                .filter(c -> c.getOrganization() != null && c.getOrganization().getId().equals(organization.getId()))
+                .map(c -> {
+                    OrganizationCertificationDTO cDto = new OrganizationCertificationDTO();
+                    cDto.setId(c.getId());
+                    cDto.setCertificationName(c.getCertificationName());
+                    cDto.setIssuingOrganization(c.getIssuingOrganization());
+                    cDto.setIssuedDate(c.getIssuedDate());
+                    cDto.setExpiryDate(c.getExpiryDate());
+                    cDto.setCredentialId(c.getCredentialId());
+                    cDto.setCredentialUrl(c.getCredentialUrl());
+                    cDto.setCreatedAt(c.getCreatedAt());
+                    return cDto;
+                })
+                .toList();
+            dto.setCertifications(certDtos);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            List<TeamMember> members = teamMemberRepository.findAll();
+            long memberCount = members.stream()
+                .filter(tm -> tm.getTeam() != null && tm.getTeam().getOrganization() != null &&
+                              tm.getTeam().getOrganization().getId().equals(organization.getId()))
+                .count();
+            dto.setTeamMembers(memberCount);
+        } catch (Exception e) {
+            dto.setTeamMembers(0L);
+        }
+
+        try {
+            List<OrganizationSector> orgSectors = organizationSectorRepository.findAll();
+            List<OrganizationDTO.SectorDTO> mappedSectors = orgSectors.stream()
+                .filter(os -> os.getOrganization() != null && os.getOrganization().getId().equals(organization.getId()))
+                .map(os -> os.getSector())
+                .filter(s -> s != null)
+                .map(s -> {
+                    OrganizationDTO.SectorDTO sDto = new OrganizationDTO.SectorDTO();
+                    sDto.setId(s.getId());
+                    sDto.setName(s.getName());
+                    sDto.setCode(s.getCode());
+                    return sDto;
+                })
+                .toList();
+            dto.setSectors(mappedSectors);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            List<OrganizationSubsector> orgSubsectors = organizationSubsectorRepository.findAll();
+            List<SubsectorDTO> mappedSubsectors = orgSubsectors.stream()
+                .filter(os -> os.getOrganization() != null && os.getOrganization().getId().equals(organization.getId()))
+                .map(os -> os.getSubsector())
+                .filter(ss -> ss != null)
+                .map(ss -> {
+                    SubsectorDTO ssDto = new SubsectorDTO();
+                    ssDto.setId(ss.getId());
+                    ssDto.setName(ss.getName());
+                    ssDto.setCode(ss.getCode());
+                    if (ss.getSector() != null) {
+                        ssDto.setSectorId(ss.getSector().getId());
+                    }
+                    return ssDto;
+                })
+                .toList();
+            dto.setSubsectors(mappedSubsectors);
+        } catch (Exception e) {
+            // ignore
+        }
 
         return dto;
     }

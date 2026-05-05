@@ -51,7 +51,7 @@ public class Organization {
     private String contactPhone;
     private String address;
 
-    private VerificationStatus verificationStatus;   // ← type enum
+    private VerificationStatus verificationStatus;
     private String profileValidationStatus;
     private User profileValidatedBy;
     private Instant profileValidatedAt;

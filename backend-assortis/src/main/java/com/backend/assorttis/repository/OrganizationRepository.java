@@ -13,4 +13,6 @@ public interface OrganizationRepository
 
     @Query("SELECT COUNT(DISTINCT o.country) FROM Organization o")
     long countDistinctCountry();
+
+    java.util.Optional<Organization> findByName(String name);
 }

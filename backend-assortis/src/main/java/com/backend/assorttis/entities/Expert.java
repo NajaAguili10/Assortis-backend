@@ -1,5 +1,6 @@
 package com.backend.assorttis.entities;
 
+import com.backend.assorttis.entities.enums.VerificationStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -31,6 +32,7 @@ public class Expert {
     private User user;
 
     private String fullName;
+    private String bio;
 
     private String nationality;
 
@@ -40,7 +42,15 @@ public class Expert {
 
     private BigDecimal dailyRate;
 
+
+
     private String currency;
+
+    private String Title;
+
+    private Long completedMissions;
+
+    private Long completedProjects;
 
     private Boolean remoteAvailable;
 
@@ -60,7 +70,7 @@ public class Expert {
 
     private BigDecimal longitude;
 
-    private String verificationStatus;
+    private VerificationStatus verificationStatus;
 
     private Integer ratingsCount;
 
@@ -183,10 +193,10 @@ public class Expert {
         return longitude;
     }
 
-    @Size(max = 20)
-    @ColumnDefault("'pending'")
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", length = 20)
-    public String getVerificationStatus() {
+    public VerificationStatus getVerificationStatus() {
         return verificationStatus;
     }
 

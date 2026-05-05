@@ -4,6 +4,11 @@ import com.backend.assorttis.dto.auth.JwtResponse;
 import com.backend.assorttis.dto.auth.LoginRequest;
 import com.backend.assorttis.security.jwt.JwtUtils;
 import com.backend.assorttis.security.services.UserDetailsImpl;
+import com.backend.assorttis.dto.auth.SignupRequest;
+import com.backend.assorttis.dto.auth.EmailVerificationRequest;
+import com.backend.assorttis.dto.auth.VerifyEmailRequest;
+import com.backend.assorttis.entities.User;
+import com.backend.assorttis.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -24,6 +30,7 @@ import java.util.stream.Collectors;
 public class AuthController {
   private final AuthenticationManager authenticationManager;
   private final JwtUtils jwtUtils;
+  private final AuthService authService;
 
   @PostMapping("/login")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -53,5 +60,35 @@ public class AuthController {
                          userDetails.getEmail(), 
                          roles,
                          permissions));
+  }
+
+  @PostMapping("/register")
+  public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+    try {
+        authService.registerUser(signUpRequest);
+        return ResponseEntity.ok("User registered successfully!");
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+  }
+
+  @PostMapping("/send-verification")
+  public ResponseEntity<?> sendVerification(@Valid @RequestBody EmailVerificationRequest request) {
+    try {
+        authService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "Verification email sent"));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+  }
+
+  @PostMapping("/verify-email")
+  public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+    try {
+        authService.verifyEmailCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
   }
 }

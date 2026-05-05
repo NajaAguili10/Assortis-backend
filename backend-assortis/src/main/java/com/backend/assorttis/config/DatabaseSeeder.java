@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import static com.backend.assorttis.entities.enums.project.ProjectStatus.ACTIVE;
+
 @Component
 @RequiredArgsConstructor
 @Order(1)
@@ -37,14 +39,14 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (userRepository.count() > 0) {
-            return; // Already seeded
+        if (projectRepository.count() > 0) {
+            return; // Already seeded projects
         }
 
-        // 1. Create Roles
-        Role expertRole = createRole("EXPERT", "Expert", "Role for individual experts");
-        Role orgRole = createRole("ORGANIZATION", "Organization", "Role for organizations");
-        Role adminRole = createRole("ADMIN", "Administrator", "System Administrator role");
+        // 1. Create Roles (Idempotent)
+        Role expertRole = ensureRole("EXPERT", "Expert", "Role for individual experts");
+        Role orgRole = ensureRole("ORGANIZATION", "Organization", "Role for organizations");
+        Role adminRole = ensureRole("ADMIN", "Administrator", "System Administrator role");
 
         // 2. Create Permissions
         Permission readOffers = createPermission("READ_OFFERS", "Can read offers");
@@ -54,10 +56,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         assignPermissionToRole(orgRole, readOffers);
         assignPermissionToRole(orgRole, writeOffers);
 
-        // 3. Create Test Users
-        User expertUser = createUser("expert@example.com", "expert123", "John", "Expert", expertRole);
-        User orgUser = createUser("organization@example.com", "org123", "Jane", "Org", orgRole);
-        createUser("admin@example.com", "admin123", "System", "Admin", adminRole);
+        // 3. Create Test Users (Idempotent)
+        User expertUser = ensureUser("expert@example.com", "password123", "John", "Expert", expertRole);
+        User orgUser = ensureUser("organization@example.com", "password123", "Jane", "Org", orgRole);
+        ensureUser("admin@example.com", "password123", "System", "Admin", adminRole);
 
         // 4. Create Expert Profile
         Expert expert = new Expert()
@@ -94,7 +96,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // 6. Create Projects
         Project project1 = new Project()
                 .setTitle("Global Infrastructure Overhaul")
-                .setStatus("ACTIVE")
+                .setStatus(ACTIVE)
                 .setReferenceCode("P-2026-001")
                 .setUpdatedAt(Instant.now());
         project1 = projectRepository.save(project1);
@@ -133,56 +135,77 @@ public class DatabaseSeeder implements CommandLineRunner {
         createInvitation(null, expertUser, null, "PARTNERSHIP", "Expert seeking collaboration", "PENDING", null);
     }
 
-    private Role createRole(String code, String label, String description) {
-        Role role = new Role()
-                .setCode(code)
-                .setLabel(label)
-                .setDescription(description)
-                .setIsSystem(true);
-        return roleRepository.save(role);
+    private Role ensureRole(String code, String label, String description) {
+        return roleRepository.findByCode(code).orElseGet(() -> {
+            Role role = new Role()
+                    .setCode(code)
+                    .setLabel(label)
+                    .setDescription(description)
+                    .setIsSystem(true);
+            return roleRepository.save(role);
+        });
     }
 
     private Permission createPermission(String code, String description) {
-        Permission permission = new Permission()
-                .setCode(code)
-                .setDescription(description);
-        return permissionRepository.save(permission);
+        return permissionRepository.findByCode(code).orElseGet(() -> {
+            Permission permission = new Permission()
+                    .setCode(code)
+                    .setDescription(description);
+            return permissionRepository.save(permission);
+        });
     }
 
     private void assignPermissionToRole(Role role, Permission permission) {
-        RolePermission rolePermission = new RolePermission();
         RolePermissionId id = new RolePermissionId()
                 .setRoleId(role.getId())
                 .setPermissionId(permission.getId());
-        rolePermission.setId(id);
-        rolePermission.setRole(role);
-        rolePermission.setPermission(permission);
-        rolePermissionRepository.save(rolePermission);
+        
+        if (!rolePermissionRepository.existsById(id)) {
+            RolePermission rolePermission = new RolePermission();
+            rolePermission.setId(id);
+            rolePermission.setRole(role);
+            rolePermission.setPermission(permission);
+            rolePermissionRepository.save(rolePermission);
+        }
     }
 
-    private User createUser(String email, String password, String firstName, String lastName, Role role) {
-        User user = new User()
-                .setEmail(email)
-                .setPasswordHash(passwordEncoder.encode(password))
-                .setFirstName(firstName)
-                .setLastName(lastName)
-                .setIsActive(true)
-                .setEmailVerified(true)
-                .setCreatedAt(Instant.now());
+    private User ensureUser(String email, String password, String firstName, String lastName, Role role) {
+        return userRepository.findByEmail(email).map(user -> {
+            user.setPasswordHash(passwordEncoder.encode(password));
+            userRepository.save(user);
+            assignRoleIfMissing(user, role);
+            return user;
+        }).orElseGet(() -> {
+            User user = new User()
+                    .setEmail(email)
+                    .setPasswordHash(passwordEncoder.encode(password))
+                    .setFirstName(firstName)
+                    .setLastName(lastName)
+                    .setIsActive(true)
+                    .setEmailVerified(true)
+                    .setCreatedAt(Instant.now());
 
-        user = userRepository.save(user);
+            user = userRepository.save(user);
+            assignRoleIfMissing(user, role);
+            return user;
+        });
+    }
 
-        UserRole userRole = new UserRole();
+    private void assignRoleIfMissing(User user, Role role) {
         UserRoleId id = new UserRoleId()
                 .setUserId(user.getId())
                 .setRoleId(role.getId())
                 .setScopeType("GLOBAL")
                 .setScopeId(0L);
-        userRole.setId(id);
-        userRole.setUser(user);
-        userRole.setRole(role);
-        userRoleRepository.save(userRole);
-        return user;
+        
+        if (!userRoleRepository.existsById(id)) {
+            UserRole userRole = new UserRole();
+            userRole.setId(id);
+            userRole.setUser(user);
+            userRole.setRole(role);
+            userRole.setAssignedAt(Instant.now());
+            userRoleRepository.save(userRole);
+        }
     }
 
     private void createJobOffer(Organization org, Project project, String title, String status, LocalDate deadline) {

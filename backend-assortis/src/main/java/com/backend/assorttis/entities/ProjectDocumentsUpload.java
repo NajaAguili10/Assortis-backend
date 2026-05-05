@@ -14,7 +14,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "project_documents_uploads")
+@Table(name = "project_documents_uploads", schema = "public")
 public class ProjectDocumentsUpload {
     @Id
     @ColumnDefault("nextval('project_documents_uploads_id_seq')")

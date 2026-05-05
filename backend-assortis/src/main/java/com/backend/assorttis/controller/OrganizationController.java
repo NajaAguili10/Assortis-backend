@@ -3,13 +3,13 @@ package com.backend.assorttis.controller;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
 import com.backend.assorttis.dto.organization.OrganizationFiltersDataDTO;
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
+import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
 import com.backend.assorttis.service.OrganizationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -28,8 +28,11 @@ public class OrganizationController {
         return organizationService.getKPIs();
     }
 
-    @GetMapping("/filters")
+   /* @GetMapping("/filters")
     public OrganizationFiltersDataDTO getFiltersData() {
         return organizationService.getFiltersData();
     }
+
+*/
+
 }

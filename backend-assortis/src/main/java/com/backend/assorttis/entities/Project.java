@@ -1,5 +1,6 @@
 package com.backend.assorttis.entities;
 
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -44,7 +45,8 @@ public class Project {
 
     private String currency;
 
-    private String status;
+    private ProjectStatus status;
+
 
     private Map<String, Object> impactIndicators;
 
@@ -130,9 +132,9 @@ public class Project {
         return currency;
     }
 
-    @Size(max = 50)
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    public String getStatus() {
+    public ProjectStatus getStatus() {
         return status;
     }
 

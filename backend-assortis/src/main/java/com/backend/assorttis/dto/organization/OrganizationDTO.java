@@ -1,8 +1,11 @@
 package com.backend.assorttis.dto.organization;
 
+import com.backend.assorttis.dto.sector.SubsectorDTO;
+import com.backend.assorttis.entities.OrganizationCertification;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Data
 public class OrganizationDTO {
@@ -50,6 +53,14 @@ public class OrganizationDTO {
     private Instant updatedAt;
     private String profileValidatedBy;
     private Instant profileValidatedAt;
+    private Long activeProjects;
+    private Long partnerships;
+    private List<OrganizationCertificationDTO> certifications ;
+    private BigDecimal budget;
+    private Long completedProjects;
+    private Long teamMembers;
+    private List<SectorDTO> sectors;
+    private List<SubsectorDTO> subsectors;
 
     @Data
     public static class CountryDTO {

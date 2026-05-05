@@ -31,7 +31,7 @@ public class ProjectMapper {
         dto.setTitle(project.getTitle());
         dto.setName(project.getTitle());
         dto.setDescription(project.getDescription());
-        dto.setStatus(project.getStatus());
+        dto.setStatus(project.getStatus().toString());
         dto.setPriority(project.getPriority());
         dto.setType(project.getType());
 

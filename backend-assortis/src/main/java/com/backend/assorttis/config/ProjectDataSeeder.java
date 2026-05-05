@@ -1,6 +1,7 @@
 package com.backend.assorttis.config;
 
 import com.backend.assorttis.entities.*;
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
 import com.backend.assorttis.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -29,6 +30,7 @@ public class ProjectDataSeeder implements CommandLineRunner {
     private final ProjectSubsectorRepository projectSubsectorRepository;
     private final SubsectorRepository subsectorRepository;
     private final ProjectTaskRepository projectTaskRepository;
+    private final ProjectOrganizationRepository projectOrganizationRepository;
 
     private final AtomicLong countryIdCounter = new AtomicLong(200);
     private final AtomicLong cityIdCounter = new AtomicLong(200);
@@ -183,7 +185,7 @@ public class ProjectDataSeeder implements CommandLineRunner {
                 .setReferenceCode(code)
                 .setTitle(title)
                 .setDescription(desc)
-                .setStatus(status)
+                .setStatus(ProjectStatus.valueOf(status))
                 .setPriority(priority)
                 .setType(type)
                 .setDonor(donor)
@@ -202,7 +204,7 @@ public class ProjectDataSeeder implements CommandLineRunner {
                 .setDeliverables(deliverables)
                 .setUpdatedAt(Instant.now());
 
-        project = projectRepository.save(project);
+        final Project savedProject = projectRepository.save(project);
 
         if (subsectorCodes != null) {
             for (String subCode : subsectorCodes) {
@@ -210,14 +212,45 @@ public class ProjectDataSeeder implements CommandLineRunner {
                 if (subOpt.isPresent()) {
                     ProjectSubsector ps = new ProjectSubsector();
                     ProjectSubsectorId psId = new ProjectSubsectorId()
-                            .setProjectId(project.getId())
+                            .setProjectId(savedProject.getId())
                             .setSubsectorId(subOpt.get().getId());
                     ps.setId(psId);
-                    ps.setProject(project);
+                    ps.setProject(savedProject);
                     ps.setSubsector(subOpt.get());
                     projectSubsectorRepository.save(ps);
                 }
             }
         }
+
+        if (org != null) {
+            ProjectOrganization po = new ProjectOrganization();
+            ProjectOrganizationId poId = new ProjectOrganizationId()
+                    .setProjectId(savedProject.getId())
+                    .setOrganizationId(org.getId());
+            po.setId(poId);
+            po.setProject(savedProject);
+            po.setOrganization(org);
+            po.setRole("IMPLEMENTING_PARTNER");
+            po.setIsLead(true);
+            projectOrganizationRepository.save(po);
+        }
+
+        // Also add a secondary organization (Prioritize UNICEF for ACTIVE projects)
+        organizationRepository.findAll().stream()
+                .filter(o -> !o.getId().equals(org != null ? org.getId() : -1L))
+                .filter(o -> "ACTIVE".equalsIgnoreCase(status) ? "UNICEF".equalsIgnoreCase(o.getName()) : true)
+                .findFirst()
+                .ifPresent(secondaryOrg -> {
+                    ProjectOrganization po2 = new ProjectOrganization();
+                    ProjectOrganizationId po2Id = new ProjectOrganizationId()
+                            .setProjectId(savedProject.getId())
+                            .setOrganizationId(secondaryOrg.getId());
+                    po2.setId(po2Id);
+                    po2.setProject(savedProject);
+                    po2.setOrganization(secondaryOrg);
+                    po2.setRole("PARTNER");
+                    po2.setIsLead(false);
+                    projectOrganizationRepository.save(po2);
+                });
     }
 }
