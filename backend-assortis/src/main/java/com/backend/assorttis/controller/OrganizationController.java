@@ -27,7 +27,6 @@ public class OrganizationController {
         return organizationService.getKPIs();
     }
 
-<<<<<<< HEAD
    /* @GetMapping("/filters")
     public OrganizationFiltersDataDTO getFiltersData() {
         return organizationService.getFiltersData();
@@ -35,6 +34,4 @@ public class OrganizationController {
 
 */
 
-=======
->>>>>>> 66b2d4ca5426974a81727f99a790270272d2e64d
 }

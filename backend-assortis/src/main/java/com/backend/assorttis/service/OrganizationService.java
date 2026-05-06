@@ -29,12 +29,9 @@ public class OrganizationService {
     private final SubsectorRepository subsectorRepository;
     private final RegionRepository regionRepository;
     private final CountryRepository countryRepository;
-<<<<<<< HEAD
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
-=======
     private final PartnershipRepository partnershipRepository;
->>>>>>> 66b2d4ca5426974a81727f99a790270272d2e64d
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
