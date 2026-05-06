@@ -9,14 +9,18 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME     = 'spring-backend:latest'
-        CONTAINER_NAME = 'spring-backend-6969'
-        APP_PORT       = '6969'
-        POSTGRES_HOST=postgres-server
-        POSTGRES_PORT=5432
-        POSTGRES_DB=appdb
-        POSTGRES_USER=postgres
-        POSTGRES_PASSWORD=postgres
+        IMAGE_NAME              = 'spring-backend:latest'
+        CONTAINER_NAME          = 'spring-backend-6969'
+        APP_PORT                = '6969'
+        DOCKER_NETWORK          = 'spring-backend-network'
+        POSTGRES_CONTAINER_NAME = 'spring-backend-postgres'
+        POSTGRES_IMAGE          = 'postgres:16-alpine'
+        POSTGRES_VOLUME         = 'spring-backend-postgres-data'
+        POSTGRES_HOST           = 'spring-backend-postgres'
+        POSTGRES_PORT           = '5432'
+        POSTGRES_DB             = 'appdb'
+        POSTGRES_USER           = 'postgres'
+        POSTGRES_PASSWORD       = 'postgres'
     }
 
     stages {
@@ -71,6 +75,91 @@ pipeline {
         }
 
         // ────────────────────────────────────────────────────
+        stage('Ensure Docker Network') {
+        // ────────────────────────────────────────────────────
+            steps {
+                sh "docker network create ${DOCKER_NETWORK} || true"
+            }
+        }
+
+        // ────────────────────────────────────────────────────
+        stage('Ensure PostgreSQL Volume') {
+        // ────────────────────────────────────────────────────
+            steps {
+                sh "docker volume create ${POSTGRES_VOLUME} || true"
+            }
+        }
+
+        // ────────────────────────────────────────────────────
+        stage('Stop Old PostgreSQL Container') {
+        // ────────────────────────────────────────────────────
+            steps {
+                sh "docker stop ${POSTGRES_CONTAINER_NAME} || true"
+            }
+        }
+
+        // ────────────────────────────────────────────────────
+        stage('Remove Old PostgreSQL Container') {
+        // ────────────────────────────────────────────────────
+            steps {
+                sh "docker rm ${POSTGRES_CONTAINER_NAME} || true"
+            }
+        }
+
+        // ────────────────────────────────────────────────────
+        stage('Run PostgreSQL Container') {
+        // ────────────────────────────────────────────────────
+            steps {
+                sh """
+                    docker run -d \
+                        --name ${POSTGRES_CONTAINER_NAME} \
+                        --restart unless-stopped \
+                        --network ${DOCKER_NETWORK} \
+                        -v ${POSTGRES_VOLUME}:/var/lib/postgresql/data \
+                        -e POSTGRES_DB=${POSTGRES_DB} \
+                        -e POSTGRES_USER=${POSTGRES_USER} \
+                        -e POSTGRES_PASSWORD="\$POSTGRES_PASSWORD" \
+                        ${POSTGRES_IMAGE}
+                """
+            }
+        }
+
+        // ────────────────────────────────────────────────────
+        stage('Verify PostgreSQL Ready') {
+        // ────────────────────────────────────────────────────
+            steps {
+                script {
+                    def maxRetries = 12
+                    def ready = false
+
+                    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                        def status = sh(
+                            script: "docker exec ${POSTGRES_CONTAINER_NAME} pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+                            returnStatus: true
+                        )
+
+                        if (status == 0) {
+                            echo "PostgreSQL is ready."
+                            ready = true
+                            break
+                        }
+
+                        if (attempt < maxRetries) {
+                            echo "PostgreSQL not ready yet. Retrying in 5s..."
+                            sleep(5)
+                        }
+                    }
+
+                    if (!ready) {
+                        echo "PostgreSQL failed to become ready. Container logs:"
+                        sh "docker logs ${POSTGRES_CONTAINER_NAME} || true"
+                        error "PostgreSQL container failed readiness checks."
+                    }
+                }
+            }
+        }
+
+        // ────────────────────────────────────────────────────
         stage('Stop Old Container') {
         // ────────────────────────────────────────────────────
             steps {
@@ -97,6 +186,7 @@ pipeline {
                     docker run -d \\
                         --name ${CONTAINER_NAME} \\
                         --restart unless-stopped \\
+                        --network ${DOCKER_NETWORK} \
                         -p ${APP_PORT}:${APP_PORT} \\
                         -e SERVER_PORT=${APP_PORT} \\
                         -e POSTGRES_HOST=${POSTGRES_HOST} \\
@@ -196,10 +286,14 @@ pipeline {
             echo "Deployment failed. Running diagnostics..."
             sh "docker ps -a --filter name=${CONTAINER_NAME} || true"
             sh "docker logs ${CONTAINER_NAME} || true"
+            sh "docker ps -a --filter name=${POSTGRES_CONTAINER_NAME} || true"
+            sh "docker logs ${POSTGRES_CONTAINER_NAME} || true"
         }
         always {
             echo "Final container status:"
             sh "docker ps --filter name=${CONTAINER_NAME} --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' || true"
+            sh "docker ps --filter name=${POSTGRES_CONTAINER_NAME} --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' || true"
+            sh "docker volume ls --filter name=${POSTGRES_VOLUME} || true"
         }
     }
 

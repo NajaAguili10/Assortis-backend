@@ -8,8 +8,9 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Copy the fat JAR produced by ./mvnw clean package -DskipTests
-COPY target/backend.assorttis-0.0.1-SNAPSHOT.jar app.jar
+# Copy the packaged JAR without tying the image to one exact version string.
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} app.jar
 
 # Copy the templates directory required by the project-references feature
 # (project-references.templates-path=./templates in application.properties)
