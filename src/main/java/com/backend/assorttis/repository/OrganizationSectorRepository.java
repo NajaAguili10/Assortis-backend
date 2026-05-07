@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface OrganizationSectorRepository
         extends JpaRepository<OrganizationSector, OrganizationSectorId>, JpaSpecificationExecutor<OrganizationSector> {
+    java.util.List<OrganizationSector> findByOrganizationId(Long organizationId);
 }

@@ -61,6 +61,10 @@ public class OrganizationDTO {
     private Long teamMembers;
     private List<SectorDTO> sectors;
     private List<SubsectorDTO> subsectors;
+    private List<String> languages;
+    private List<String> services;
+    private List<String> operatingRegions;
+    private List<String> partnershipNames;
 
     @Data
     public static class CountryDTO {

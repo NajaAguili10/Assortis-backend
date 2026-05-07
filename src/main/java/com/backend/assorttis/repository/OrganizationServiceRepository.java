@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface OrganizationServiceRepository extends JpaRepository<OrganizationService, OrganizationServiceId>,
         JpaSpecificationExecutor<OrganizationService> {
+    java.util.List<OrganizationService> findByOrganizationId(Long organizationId);
 }

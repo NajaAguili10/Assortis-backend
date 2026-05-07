@@ -19,6 +19,8 @@ public class OrganizationMapper {
     private final ProjectRepository projectRepository;
     private final OrganizationSectorRepository organizationSectorRepository;
     private final OrganizationSubsectorRepository organizationSubsectorRepository;
+    private final OrganizationLanguageRepository organizationLanguageRepository;
+    private final OrganizationServiceRepository organizationServiceRepository;
     private final PartnershipRepository partnershipRepository;
     private final OrganizationCertificationRepository organizationCertificationRepository;
     private final TeamMemberRepository teamMemberRepository;
@@ -28,6 +30,8 @@ public class OrganizationMapper {
                               ProjectRepository projectRepository,
                               OrganizationSectorRepository organizationSectorRepository,
                               OrganizationSubsectorRepository organizationSubsectorRepository,
+                              OrganizationLanguageRepository organizationLanguageRepository,
+                              OrganizationServiceRepository organizationServiceRepository,
                               PartnershipRepository partnershipRepository,
                               OrganizationCertificationRepository organizationCertificationRepository,
                               TeamMemberRepository teamMemberRepository) {
@@ -35,6 +39,8 @@ public class OrganizationMapper {
         this.projectRepository = projectRepository;
         this.organizationSectorRepository = organizationSectorRepository;
         this.organizationSubsectorRepository = organizationSubsectorRepository;
+        this.organizationLanguageRepository = organizationLanguageRepository;
+        this.organizationServiceRepository = organizationServiceRepository;
         this.partnershipRepository = partnershipRepository;
         this.organizationCertificationRepository = organizationCertificationRepository;
         this.teamMemberRepository = teamMemberRepository;
@@ -81,6 +87,9 @@ public class OrganizationMapper {
         dto.setEquipmentInfrastructure(organization.getEquipmentInfrastructure());
         dto.setContactName(organization.getContactName());
         dto.setContactTitle(organization.getContactTitle());
+        dto.setOperatingRegions(organization.getRegion() == null || organization.getRegion().isBlank()
+                ? List.of()
+                : List.of(organization.getRegion()));
 
         // Country Mapping
         OrganizationDTO.CountryDTO countryDTO = new OrganizationDTO.CountryDTO();
@@ -165,6 +174,18 @@ public class OrganizationMapper {
                              (p.getPartnerOrganization() != null && p.getPartnerOrganization().getId().equals(organization.getId())))
                 .count();
             dto.setPartnerships(count);
+            dto.setPartnershipNames(partnerships.stream()
+                .filter(p -> (p.getOrganization() != null && p.getOrganization().getId().equals(organization.getId())) ||
+                             (p.getPartnerOrganization() != null && p.getPartnerOrganization().getId().equals(organization.getId())))
+                .map(p -> {
+                    if (p.getOrganization() != null && p.getOrganization().getId().equals(organization.getId())) {
+                        return p.getPartnerOrganization() != null ? p.getPartnerOrganization().getName() : null;
+                    }
+                    return p.getOrganization() != null ? p.getOrganization().getName() : null;
+                })
+                .filter(name -> name != null && !name.isBlank())
+                .distinct()
+                .toList());
         } catch (Exception e) {
             dto.setPartnerships(0L);
         }
@@ -239,6 +260,28 @@ public class OrganizationMapper {
                 })
                 .toList();
             dto.setSubsectors(mappedSubsectors);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            dto.setLanguages(organizationLanguageRepository.findByOrganizationId(organization.getId()).stream()
+                    .map(OrganizationLanguage::getLanguageCode)
+                    .filter(language -> language != null && language.getName() != null && !language.getName().isBlank())
+                    .map(Language::getName)
+                    .distinct()
+                    .toList());
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            dto.setServices(organizationServiceRepository.findByOrganizationId(organization.getId()).stream()
+                    .map(OrganizationService::getService)
+                    .filter(service -> service != null && service.getLabel() != null && !service.getLabel().isBlank())
+                    .map(Service::getLabel)
+                    .distinct()
+                    .toList());
         } catch (Exception e) {
             // ignore
         }
