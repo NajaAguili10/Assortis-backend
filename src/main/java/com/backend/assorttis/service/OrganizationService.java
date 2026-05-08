@@ -4,9 +4,6 @@ import com.backend.assorttis.dto.location.CountryDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
 
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
-import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
-import com.backend.assorttis.entities.OrganizationSavedSearch;
-import com.backend.assorttis.entities.User;
 import com.backend.assorttis.mappers.CountryMapper;
 import com.backend.assorttis.mappers.OrganizationMapper;
 import com.backend.assorttis.mappers.SectorMapper;
@@ -19,11 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
+
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationMapper organizationMapper;
@@ -35,8 +32,14 @@ public class OrganizationService {
 
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
+    private final OrganizationUserRepository organizationUserRepository;
 
     private final PartnershipRepository partnershipRepository;
+    private final OrganizationSubscriptionSectorRepository subscriptionSectorRepository;
+    private final OrganizationSubscriptionCountryRepository subscriptionCountryRepository;
+
+    private final SectorMapper sectorMapper;
+    private final CountryMapper countryMapper;
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
@@ -86,5 +89,14 @@ public class OrganizationService {
         return subscriptionCountryRepository.findById_OrganizationId(organizationId).stream()
                 .map(osc -> countryMapper.toDTO(osc.getCountry()))
                 .collect(Collectors.toList());
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public Long getOrganizationIdByUserId(Long userId) {
+        return organizationUserRepository.findFirstByUserId(userId)
+                .map(ou -> ou.getOrganization().getId())
+                .orElse(null);
     }
 }

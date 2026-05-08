@@ -3,8 +3,8 @@ package com.backend.assorttis.repository;
 import com.backend.assorttis.entities.OrganizationService;
 import com.backend.assorttis.entities.OrganizationServiceId;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
-public interface OrganizationServiceRepository extends JpaRepository<OrganizationService, OrganizationServiceId>,
-        JpaSpecificationExecutor<OrganizationService> {
+@Repository
+public interface OrganizationServiceRepository extends JpaRepository<OrganizationService, OrganizationServiceId> {
 }

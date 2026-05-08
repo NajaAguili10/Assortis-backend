@@ -247,7 +247,7 @@ public class ExpertDataSeeder implements CommandLineRunner {
         Expert expert = new Expert()
                 .setUser(user)
                 .setFullName(firstName + " " + lastName)
-                 .setTitle(title)
+                .setTitle(title)
                 .setNationality(nationality)
                 .setCurrentPosition(currentPosition)
                 .setYearsExperience(yearsExperience)
@@ -268,9 +268,9 @@ public class ExpertDataSeeder implements CommandLineRunner {
                 .setUpdatedAt(Instant.now());
 
         // Check if expert has Bid Writer skills
-        boolean isBidWriter = currentPosition.toLowerCase().contains("bid writer") || 
-                             currentPosition.toLowerCase().contains("proposal") ||
-                             skillNames.stream().anyMatch(s -> s.toLowerCase().contains("bid") || s.toLowerCase().contains("proposal"));
+        boolean isBidWriter = currentPosition.toLowerCase().contains("bid writer") ||
+                currentPosition.toLowerCase().contains("proposal") ||
+                skillNames.stream().anyMatch(s -> s.toLowerCase().contains("bid") || s.toLowerCase().contains("proposal"));
         expert.setIsBidWriter(isBidWriter);
 
         expert = expertRepository.save(expert);

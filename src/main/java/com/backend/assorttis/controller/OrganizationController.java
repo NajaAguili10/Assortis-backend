@@ -86,6 +86,5 @@ public class OrganizationController {
         organizationService.deleteSavedSearch(id);
     }
  */
-=======
->>>>>>> 75553478b62e416e5789432e2f61071fa67327f9:src/main/java/com/backend/assorttis/controller/OrganizationController.java
+
 }
