@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class CurrentOrganizationUpdateRequest {
     private String name;
+    private String acronym;
     private String type;
     private String legalName;
     private String registrationNumber;
@@ -21,10 +22,12 @@ public class CurrentOrganizationUpdateRequest {
     private String country;
     private String postalCode;
     private String region;
+    private List<String> operatingRegions;
     private List<String> sectors;
     private List<String> subsectors;
     private List<String> languages;
     private Integer employeesCount;
     private BigDecimal annualTurnover;
+    private Long projectsCompleted;
     private List<String> services;
 }

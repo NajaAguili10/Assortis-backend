@@ -92,6 +92,7 @@ public class OrganizationService {
         Organization organization = resolveCurrentOrganization(userEmail);
 
         organization.setName(defaultIfBlank(request.getName(), organization.getName()));
+        organization.setAcronym(blankToNull(request.getAcronym()));
         organization.setType(blankToNull(request.getType()));
         organization.setLegalName(blankToNull(request.getLegalName()));
         organization.setRegistrationNumber(blankToNull(request.getRegistrationNumber()));
@@ -102,9 +103,13 @@ public class OrganizationService {
         organization.setWebsite(blankToNull(request.getWebsite()));
         organization.setAddress(blankToNull(request.getAddress()));
         organization.setPostalCode(blankToNull(request.getPostalCode()));
-        organization.setRegion(blankToNull(request.getRegion()));
+        organization.setOperatingRegionsRaw(joinValues(request.getOperatingRegions()));
+        organization.setRegion(resolvePrimaryRegion(request));
         organization.setEmployeesCount(request.getEmployeesCount());
         organization.setAnnualTurnover(request.getAnnualTurnover() != null ? request.getAnnualTurnover() : BigDecimal.ZERO);
+        organization.setProfileProjectsCompleted(request.getProjectsCompleted());
+        organization.setCityNameOverride(blankToNull(request.getCity()));
+        organization.setCountryNameOverride(blankToNull(request.getCountry()));
         organization.setCity(resolveCity(request.getCity()));
         organization.setCountry(resolveCountry(request.getCountry()));
 
@@ -246,6 +251,32 @@ public class OrganizationService {
 
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String resolvePrimaryRegion(CurrentOrganizationUpdateRequest request) {
+        if (request.getOperatingRegions() != null) {
+            return request.getOperatingRegions().stream()
+                    .filter(StringUtils::hasText)
+                    .map(String::trim)
+                    .findFirst()
+                    .orElseGet(() -> blankToNull(request.getRegion()));
+        }
+
+        return blankToNull(request.getRegion());
+    }
+
+    private String joinValues(List<String> values) {
+        if (values == null) {
+            return null;
+        }
+
+        List<String> normalized = values.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .toList();
+
+        return normalized.isEmpty() ? null : String.join(",", normalized);
     }
 
     private String defaultIfBlank(String value, String fallback) {

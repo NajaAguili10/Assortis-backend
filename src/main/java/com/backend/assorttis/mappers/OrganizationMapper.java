@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -87,9 +88,14 @@ public class OrganizationMapper {
         dto.setEquipmentInfrastructure(organization.getEquipmentInfrastructure());
         dto.setContactName(organization.getContactName());
         dto.setContactTitle(organization.getContactTitle());
-        dto.setOperatingRegions(organization.getRegion() == null || organization.getRegion().isBlank()
-                ? List.of()
-                : List.of(organization.getRegion()));
+        dto.setOperatingRegions(organization.getOperatingRegionsRaw() == null || organization.getOperatingRegionsRaw().isBlank()
+                ? (organization.getRegion() == null || organization.getRegion().isBlank()
+                    ? List.of()
+                    : List.of(organization.getRegion()))
+                : Arrays.stream(organization.getOperatingRegionsRaw().split(","))
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .toList());
 
         // Country Mapping
         OrganizationDTO.CountryDTO countryDTO = new OrganizationDTO.CountryDTO();
@@ -97,7 +103,10 @@ public class OrganizationMapper {
             countryDTO.setId(organization.getCountry().getId());
             countryDTO.setName(organization.getCountry().getName());
             countryDTO.setCode(organization.getCountry().getCode());
-        } 
+        }
+        if (organization.getCountryNameOverride() != null && !organization.getCountryNameOverride().isBlank()) {
+            countryDTO.setName(organization.getCountryNameOverride());
+        }
         dto.setCountry(countryDTO);
 
         // City Mapping
@@ -105,8 +114,11 @@ public class OrganizationMapper {
         if (organization.getCity() != null) {
             cityDTO.setId(organization.getCity().getId());
             cityDTO.setName(organization.getCity().getName());
-        } else {
+        } else if (organization.getCityNameOverride() == null || organization.getCityNameOverride().isBlank()) {
             cityDTO.setName("N/A");
+        }
+        if (organization.getCityNameOverride() != null && !organization.getCityNameOverride().isBlank()) {
+            cityDTO.setName(organization.getCityNameOverride());
         }
         dto.setCity(cityDTO);
 
@@ -153,7 +165,9 @@ public class OrganizationMapper {
                 .map(po -> po.getProject())
                 .filter(p -> p != null && ProjectStatus.COMPLETED.equals(p.getStatus()))
                 .count();
-            dto.setCompletedProjects(completedCount);
+            dto.setCompletedProjects(organization.getProfileProjectsCompleted() != null
+                    ? organization.getProfileProjectsCompleted()
+                    : completedCount);
 
             BigDecimal totalBudget = orgProjectOrgs.stream()
                 .map(po -> po.getProject())
@@ -163,7 +177,9 @@ public class OrganizationMapper {
             dto.setBudget(totalBudget);
         } catch (Exception e) {
             dto.setActiveProjects(0L);
-            dto.setCompletedProjects(0L);
+            dto.setCompletedProjects(organization.getProfileProjectsCompleted() != null
+                    ? organization.getProfileProjectsCompleted()
+                    : 0L);
             dto.setBudget(BigDecimal.ZERO);
         }
 
