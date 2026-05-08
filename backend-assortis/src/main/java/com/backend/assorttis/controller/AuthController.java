@@ -59,7 +59,8 @@ public class AuthController {
                          userDetails.getId(), 
                          userDetails.getEmail(), 
                          roles,
-                         permissions));
+                         permissions
+                       ));
   }
 
   @PostMapping("/register")

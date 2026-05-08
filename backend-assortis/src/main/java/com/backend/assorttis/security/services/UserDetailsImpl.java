@@ -21,9 +21,10 @@ public class UserDetailsImpl implements UserDetails {
   @JsonIgnore
   private String password;
 
+
   private Collection<? extends GrantedAuthority> authorities;
 
-  public static UserDetailsImpl build(User user, Collection<? extends GrantedAuthority> authorities) {
+  public static UserDetailsImpl build(User user, Long organizationId, Collection<? extends GrantedAuthority> authorities) {
     return new UserDetailsImpl(
         user.getId(),
         user.getEmail(),

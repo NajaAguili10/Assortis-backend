@@ -18,6 +18,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.backend.assorttis.entities.enums.project.ProjectStatus.ACTIVE;
+
 @Service
 @RequiredArgsConstructor
 public class JobOfferService {
@@ -107,7 +109,7 @@ public class JobOfferService {
                 .orElseGet(() -> projectRepository.save(
                         new Project()
                                 .setTitle(projectTitle)
-                                .setStatus("ACTIVE")
+                                .setStatus(ACTIVE)
                                 .setUpdatedAt(Instant.now())
                 ));
     }

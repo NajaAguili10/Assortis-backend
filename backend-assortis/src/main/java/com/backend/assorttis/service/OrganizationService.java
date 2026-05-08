@@ -1,12 +1,14 @@
 package com.backend.assorttis.service;
 
+import com.backend.assorttis.dto.location.CountryDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
-
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
 import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
 import com.backend.assorttis.entities.OrganizationSavedSearch;
 import com.backend.assorttis.entities.User;
+import com.backend.assorttis.mappers.CountryMapper;
 import com.backend.assorttis.mappers.OrganizationMapper;
+import com.backend.assorttis.mappers.SectorMapper;
 import com.backend.assorttis.repository.*;
 import com.backend.assorttis.repository.OrganizationRepository;
 import com.backend.assorttis.repository.PartnershipRepository;
@@ -29,12 +31,24 @@ public class OrganizationService {
     private final SubsectorRepository subsectorRepository;
     private final RegionRepository regionRepository;
     private final CountryRepository countryRepository;
-<<<<<<< HEAD
+
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
-=======
+
     private final PartnershipRepository partnershipRepository;
->>>>>>> 66b2d4ca5426974a81727f99a790270272d2e64d
+    private final OrganizationSubscriptionSectorRepository subscriptionSectorRepository;
+    private final SectorMapper sectorMapper;
+    private final OrganizationUserRepository organizationUserRepository;
+    private final OrganizationSubscriptionCountryRepository subscriptionCountryRepository;
+    private final CountryMapper countryMapper;
+
+    @Transactional(readOnly = true)
+    public Long getOrganizationIdByUserId(Long userId) {
+        return organizationUserRepository.findByUserId(userId)
+                .map(ou -> ou.getId().getOrganizationId())
+                .orElse(null);
+    }
+
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
@@ -65,5 +79,24 @@ public class OrganizationService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getSubscriptionSectors(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> oss.getSector().getCode())
+                .collect(Collectors.toList());
+    }
 
+    @Transactional(readOnly = true)
+    public List<com.backend.assorttis.dto.sector.SectorDTO> getSubscriptionSectorDTOs(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> sectorMapper.toSectorDTO(oss.getSector()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryDTO> getSubscriptionCountryDTOs(Long organizationId) {
+        return subscriptionCountryRepository.findById_OrganizationId(organizationId).stream()
+                .map(osc -> countryMapper.toDTO(osc.getCountry()))
+                .collect(Collectors.toList());
+    }
 }

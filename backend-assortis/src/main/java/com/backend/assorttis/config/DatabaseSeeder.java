@@ -34,6 +34,8 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final InvitationRepository invitationRepository;
     private final ProjectRepository projectRepository;
     private final JobApplicationRepository jobApplicationRepository;
+    private final ExpertSubscriptionSectorRepository expertSubscriptionSectorRepository;
+    private final ExpertSubscriptionCountryRepository expertSubscriptionCountryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -42,6 +44,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (projectRepository.count() > 0) {
             return; // Already seeded projects
         }
+
+        // 0. Cleanup removed to allow testing persistent registrations
 
         // 1. Create Roles (Idempotent)
         Role expertRole = ensureRole("EXPERT", "Expert", "Role for individual experts");
@@ -62,36 +66,57 @@ public class DatabaseSeeder implements CommandLineRunner {
         ensureUser("admin@example.com", "password123", "System", "Admin", adminRole);
 
         // 4. Create Expert Profile
-        Expert expert = new Expert()
-                .setUser(expertUser)
-                .setFullName("John Expert")
-                .setYearsExperience(10)
-                .setAvailabilityStatus("AVAILABLE")
-                .setCreatedAt(Instant.now());
+        Expert expert = new Expert();
+        expert.setUser(expertUser);
+        expert.setFullName("John Expert");
+        expert.setYearsExperience(10);
+        expert.setAvailabilityStatus("available");
+        expert.setCreatedAt(Instant.now());
         expert = expertRepository.save(expert);
 
         // 5. Create Organization
-        Organization organization = new Organization()
-                .setName("Assortis Tech")
-                .setLegalName("Assortis Technologies Ltd.")
-                .setType("IT_SERVICES")
-                .setIsActive(true)
-                .setCreatedAt(Instant.now());
+        Organization organization = new Organization();
+        organization.setName("Assortis Tech");
+        organization.setLegalName("Assortis Technologies Ltd.");
+        organization.setType("IT_SERVICES");
+        organization.setIsActive(true);
+        organization.setCreatedAt(Instant.now());
         organization = organizationRepository.save(organization);
 
-        // Link Org User to Organization
+        // Link Org User to Organization 19 (instead of the newly created one, to match experts)
+        Organization targetOrgForUser = organizationRepository.findById(19L).orElse(organization);
+        
         OrganizationUser orgUserMembership = new OrganizationUser();
-        OrganizationUserId orgUserId = new OrganizationUserId()
-                .setOrganizationId(organization.getId())
-                .setUserId(orgUser.getId());
+        OrganizationUserId orgUserId = new OrganizationUserId();
+        orgUserId.setOrganizationId(targetOrgForUser.getId());
+        orgUserId.setUserId(orgUser.getId());
         orgUserMembership.setId(orgUserId);
-        orgUserMembership.setOrganization(organization);
+        orgUserMembership.setOrganization(targetOrgForUser);
         orgUserMembership.setUser(orgUser);
         orgUserMembership.setMembershipStatus("active");
         orgUserMembership.setDepartment("Human Resources");
         orgUserMembership.setIsAdmin(true);
         orgUserMembership.setJoinedAt(Instant.now());
         organizationUserRepository.save(orgUserMembership);
+
+        // New relationship: Org 7 and User 7 (as requested)
+        organizationRepository.findById(7L).ifPresent(org7 -> {
+            userRepository.findById(7L).ifPresent(user7 -> {
+                OrganizationUserId id77 = new OrganizationUserId();
+                id77.setOrganizationId(7L);
+                id77.setUserId(7L);
+                
+                if (!organizationUserRepository.existsById(id77)) {
+                    OrganizationUser membership77 = new OrganizationUser();
+                    membership77.setId(id77);
+                    membership77.setOrganization(org7);
+                    membership77.setUser(user7);
+                    membership77.setMembershipStatus("active");
+                    membership77.setJoinedAt(Instant.now());
+                    organizationUserRepository.save(membership77);
+                }
+            });
+        });
 
         // 6. Create Projects
         Project project1 = new Project()

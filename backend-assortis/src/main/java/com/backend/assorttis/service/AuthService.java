@@ -21,8 +21,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final MailService mailService;
     private final OrganizationRepository organizationRepository;
     private final ExpertRepository expertRepository;
+    private final SectorRepository sectorRepository;
+    private final CountryRepository countryRepository;
+    private final ExpertSubscriptionSectorRepository expertSubscriptionSectorRepository;
+    private final ExpertSubscriptionCountryRepository expertSubscriptionCountryRepository;
+    private final OrganizationSubscriptionSectorRepository organizationSubscriptionSectorRepository;
+    private final OrganizationSubscriptionCountryRepository organizationSubscriptionCountryRepository;
+    private final OrganizationUserRepository organizationUserRepository;
     private final PasswordEncoder passwordEncoder;
 
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -31,8 +39,19 @@ public class AuthService {
         final String normalizedEmail = email.toLowerCase().trim();
         String code = String.format("%06d", new Random().nextInt(999999));
         verificationCodes.put(normalizedEmail, code);
-        // Simulate sending email by logging it
-        System.out.println("Verification code for " + normalizedEmail + " is " + code + " (Use the latest one if multiple appear)");
+        
+        // Print to console (Primary way for now)
+        System.out.println("\n==================================================");
+        System.out.println("VERIFICATION CODE FOR: " + normalizedEmail);
+        System.out.println("CODE: " + code);
+        System.out.println("==================================================\n");
+
+        // Attempt real email (will fallback to console if SMTP disabled)
+        try {
+            mailService.sendVerificationEmail(normalizedEmail, code);
+        } catch (Exception e) {
+            // Silently fail if SMTP is disabled, as we already logged to console
+        }
     }
 
     @Transactional
@@ -122,7 +141,61 @@ public class AuthService {
             org.setCreatedAt(Instant.now());
             org.setIsActive(true);
             
-            organizationRepository.save(org);
+            final Organization savedOrg = organizationRepository.save(org);
+
+            // Link user to organization
+            OrganizationUserId ouId = new OrganizationUserId();
+            ouId.setOrganizationId(savedOrg.getId());
+            ouId.setUserId(user.getId());
+
+            OrganizationUser ou = new OrganizationUser();
+            ou.setId(ouId);
+            ou.setOrganization(savedOrg);
+            ou.setUser(user);
+            ou.setRole("ADMIN"); // Default role
+            ou.setIsAdmin(true);
+            ou.setMembershipStatus("active");
+            ou.setJoinedAt(Instant.now());
+            organizationUserRepository.save(ou);
+
+            // Save subscription sectors
+            if (signUpRequest.getSubscriptionSectors() != null) {
+                System.out.println("DEBUG: Processing " + signUpRequest.getSubscriptionSectors().size() + " subscription sectors for organization");
+                for (String sectorCode : signUpRequest.getSubscriptionSectors()) {
+                    sectorRepository.findByCode(sectorCode).ifPresentOrElse(sector -> {
+                        OrganizationSubscriptionSectorId id = new OrganizationSubscriptionSectorId();
+                        id.setOrganizationId(savedOrg.getId());
+                        id.setSectorId(sector.getId());
+
+                        OrganizationSubscriptionSector oss = new OrganizationSubscriptionSector();
+                        oss.setId(id);
+                        oss.setOrganization(savedOrg);
+                        oss.setSector(sector);
+                        organizationSubscriptionSectorRepository.saveAndFlush(oss);
+                    }, () -> System.out.println("DEBUG: Sector code not found: " + sectorCode));
+                }
+            }
+
+            // Save subscription countries
+            if (signUpRequest.getSubscriptionCountries() != null) {
+                System.out.println("Registering organization subscription countries: " + signUpRequest.getSubscriptionCountries());
+                for (String countryCode : signUpRequest.getSubscriptionCountries()) {
+                    countryRepository.findByCode(countryCode).ifPresentOrElse(country -> {
+                        System.out.println("Saving organization subscription country: " + countryCode);
+                        OrganizationSubscriptionCountryId id = new OrganizationSubscriptionCountryId();
+                        id.setOrganizationId(savedOrg.getId());
+                        id.setCountryId(country.getId());
+
+                        OrganizationSubscriptionCountry osc = new OrganizationSubscriptionCountry();
+                        osc.setId(id);
+                        osc.setOrganization(savedOrg);
+                        osc.setCountry(country);
+                        organizationSubscriptionCountryRepository.saveAndFlush(osc);
+                    }, () -> {
+                        System.out.println("DEBUG: Country code not found: " + countryCode);
+                    });
+                }
+            }
         } else if ("expert".equalsIgnoreCase(signUpRequest.getAccountType())) {
             Expert expert = new Expert();
             expert.setUser(user);
@@ -140,7 +213,46 @@ public class AuthService {
                 }
             } catch (NumberFormatException ignored) {}
 
-            expertRepository.save(expert);
+            final Expert savedExpert = expertRepository.save(expert);
+
+            // Save subscription sectors
+            if (signUpRequest.getSubscriptionSectors() != null) {
+                System.out.println("DEBUG: Processing " + signUpRequest.getSubscriptionSectors().size() + " subscription sectors for organization");
+                for (String sectorCode : signUpRequest.getSubscriptionSectors()) {
+                    sectorRepository.findByCode(sectorCode).ifPresentOrElse(sector -> {
+                        ExpertSubscriptionSectorId id = new ExpertSubscriptionSectorId();
+                        id.setExpertId(savedExpert.getId());
+                        id.setSectorId(sector.getId());
+
+                        ExpertSubscriptionSector ess = new ExpertSubscriptionSector();
+                        ess.setId(id);
+                        ess.setExpert(savedExpert);
+                        ess.setSector(sector);
+                        expertSubscriptionSectorRepository.saveAndFlush(ess);
+                    }, () -> System.out.println("DEBUG: Sector code not found: " + sectorCode));
+                }
+            }
+
+            // Save subscription countries
+            if (signUpRequest.getSubscriptionCountries() != null) {
+                System.out.println("Registering expert subscription countries: " + signUpRequest.getSubscriptionCountries());
+                for (String countryCode : signUpRequest.getSubscriptionCountries()) {
+                    countryRepository.findByCode(countryCode).ifPresentOrElse(country -> {
+                        System.out.println("Saving expert subscription country: " + countryCode);
+                        ExpertSubscriptionCountryId id = new ExpertSubscriptionCountryId();
+                        id.setExpertId(savedExpert.getId());
+                        id.setCountryId(country.getId());
+
+                        ExpertSubscriptionCountry esc = new ExpertSubscriptionCountry();
+                        esc.setId(id);
+                        esc.setExpert(savedExpert);
+                        esc.setCountry(country);
+                        expertSubscriptionCountryRepository.saveAndFlush(esc);
+                    }, () -> {
+                        System.out.println("DEBUG: Country code not found: " + countryCode);
+                    });
+                }
+            }
         }
 
         return user;
