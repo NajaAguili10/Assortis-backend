@@ -23,6 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RolePermissionRepository rolePermissionRepository;
+    private final com.backend.assorttis.repository.OrganizationUserRepository organizationUserRepository;
 
     @Override
     @Transactional
@@ -46,6 +47,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                             });
                 });
 
-        return UserDetailsImpl.build(user, authorities);
+        Long organizationId = organizationUserRepository.findByUserId(user.getId())
+                .map(ou -> ou.getId().getOrganizationId())
+                .orElse(null);
+
+        return UserDetailsImpl.build(user, organizationId, authorities);
     }
 }

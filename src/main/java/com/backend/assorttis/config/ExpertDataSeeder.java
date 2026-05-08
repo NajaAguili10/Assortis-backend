@@ -52,6 +52,7 @@ public class ExpertDataSeeder implements CommandLineRunner {
 
         Organization assortisTech = organizationRepository.findByName("Assortis Tech").orElse(null);
         Organization unicef = organizationRepository.findByName("UNICEF").orElse(null);
+        Organization targetOrg = organizationRepository.findById(19L).orElse(null);
 
         // Expert 1: Sarah Johnson
         createExpert(
@@ -59,7 +60,7 @@ public class ExpertDataSeeder implements CommandLineRunner {
                 12, 850, "EUR", "IMMEDIATE", 80.0,
                 "Experienced project manager specializing in international development projects with a focus on infrastructure and governance.",
                 4.8, VerificationStatus.ACTIVE, "SENIOR", true, "2024-02-20T10:30:00Z",
-                assortisTech, "United Kingdom", "GB", "London",
+                targetOrg != null ? targetOrg : assortisTech, "United Kingdom", "GB", "London",
                 List.of("INFRASTRUCTURE", "GOVERNANCE"),
                 List.of("Project Management", "Stakeholder Engagement", "M&E", "Budget Management"),
                 List.of(new LangInfo("EN", "English", "NATIVE"), new LangInfo("FR", "French", "FLUENT")),
@@ -73,7 +74,7 @@ public class ExpertDataSeeder implements CommandLineRunner {
                 15, 750, "EUR", "WITHIN_1_MONTH", 70.0,
                 "Agricultural economist with extensive experience in sustainable farming and rural development across Africa.",
                 4.9, VerificationStatus.VERIFIED, "EXPERT", true, "2024-02-22T14:15:00Z",
-                assortisTech, "Egypt", "EG", "Cairo",
+                targetOrg != null ? targetOrg : assortisTech, "Egypt", "EG", "Cairo",
                 List.of("AGRICULTURE", "ENVIRONMENT"),
                 List.of("Agricultural Economics", "Rural Development", "Sustainable Farming", "Capacity Building"),
                 List.of(new LangInfo("AR", "Arabic", "NATIVE"), new LangInfo("EN", "English", "FLUENT"), new LangInfo("FR", "French", "INTERMEDIATE")),
@@ -274,29 +275,7 @@ public class ExpertDataSeeder implements CommandLineRunner {
 
         expert = expertRepository.save(expert);
 
-        // Sectors
-        for (String code : sectorCodes) {
-            Optional<Sector> sectorOpt = sectorRepository.findByCode(code);
-            Sector sector = sectorOpt.orElseGet(() -> {
-                Sector s = new Sector()
-                        .setCode(code)
-                        .setName(code.charAt(0) + code.substring(1).toLowerCase().replace("_", " "))
-                        .setDescription(code + " sector");
-                s.setId(sectorIdCounter.getAndIncrement());
-                return sectorRepository.save(s);
-            });
-
-            ExpertSectorId esId = new ExpertSectorId()
-                    .setExpertId(expert.getId())
-                    .setSectorId(sector.getId());
-            if (!expertSectorRepository.existsById(esId)) {
-                ExpertSector es = new ExpertSector()
-                        .setId(esId)
-                        .setExpert(expert)
-                        .setSector(sector);
-                expertSectorRepository.save(es);
-            }
-        }
+        // Sectors removed to prevent unwanted data creation
 
         // Skills
         for (String skillName : skillNames) {

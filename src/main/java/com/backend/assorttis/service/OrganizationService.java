@@ -1,8 +1,12 @@
 package com.backend.assorttis.service;
 
 import com.backend.assorttis.dto.organization.CurrentOrganizationUpdateRequest;
+import com.backend.assorttis.dto.location.CountryDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
+import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
+import com.backend.assorttis.entities.OrganizationSavedSearch;
+import com.backend.assorttis.entities.User;
 import com.backend.assorttis.entities.City;
 import com.backend.assorttis.entities.Country;
 import com.backend.assorttis.entities.Language;
@@ -15,7 +19,10 @@ import com.backend.assorttis.entities.OrganizationSubsector;
 import com.backend.assorttis.entities.OrganizationSubsectorId;
 import com.backend.assorttis.entities.OrganizationServiceId;
 import com.backend.assorttis.mappers.OrganizationMapper;
+import com.backend.assorttis.mappers.SectorMapper;
 import com.backend.assorttis.repository.*;
+import com.backend.assorttis.repository.OrganizationRepository;
+import com.backend.assorttis.repository.PartnershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
