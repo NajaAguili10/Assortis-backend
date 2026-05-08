@@ -1,0 +1,31 @@
+# ── Version control ─────────────────────────────────────────
+.git
+.gitattributes
+.gitignore
+
+# ── IDE / editor metadata ────────────────────────────────────
+.idea
+*.iml
+*.iws
+*.ipr
+.vscode
+
+# ── Maven wrapper internals (not needed in image) ────────────
+.mvn
+mvnw
+mvnw.cmd
+
+# ── Source & config (compiled into the JAR already) ─────────
+src
+
+# ── Build output – exclude everything EXCEPT the fat JAR ────
+target/
+!target/*.jar
+
+# ── Documentation ────────────────────────────────────────────
+*.md
+*.txt
+
+# ── OS artifacts ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
