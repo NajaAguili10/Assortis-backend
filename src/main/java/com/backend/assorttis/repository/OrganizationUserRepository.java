@@ -15,31 +15,16 @@ public interface OrganizationUserRepository
 
 
 
-    @Query("""
-            select ou from OrganizationUser ou
-            join fetch ou.organization
-            join fetch ou.user
-            where ou.id.userId = :userId
-            order by ou.joinedAt asc
-            """)
-    List<OrganizationUser> findMembershipsByUserId(@Param("userId") Long userId);
-    @Query("""
-            select ou from OrganizationUser ou
-            join fetch ou.organization
-            join fetch ou.user
-            where ou.id.userId = :userId
-            order by ou.joinedAt asc
-            """)
-    List<OrganizationUser> findMembershipsByUserId(@Param("userId") Long userId);
 
     @Query("""
             select ou from OrganizationUser ou
             join fetch ou.organization
             join fetch ou.user
-            where ou.organization.id = :organizationId
+            where ou.id.userId = :userId
             order by ou.joinedAt asc
             """)
-    List<OrganizationUser> findMembersByOrganizationId(@Param("organizationId") Long organizationId);
+    List<OrganizationUser> findMembershipsByUserId(@Param("userId") Long userId);
+    
 
     @Query("""
             SELECT ou.organization.id FROM OrganizationUser ou

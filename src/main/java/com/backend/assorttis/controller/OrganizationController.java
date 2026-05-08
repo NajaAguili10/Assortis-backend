@@ -27,10 +27,7 @@ public class OrganizationController {
     private final OrganizationService organizationService;
     private final ExpertService expertService;
 
-    @GetMapping
-    public List<OrganizationDTO> getAllOrganizations() {
-        return organizationService.getAllOrganizations();
-    }
+
     @GetMapping
     public List<OrganizationDTO> getAllOrganizationsByOrganization() {
         return organizationService.getAllOrganizations();
