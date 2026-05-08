@@ -18,6 +18,7 @@ import com.backend.assorttis.entities.OrganizationSectorId;
 import com.backend.assorttis.entities.OrganizationSubsector;
 import com.backend.assorttis.entities.OrganizationSubsectorId;
 import com.backend.assorttis.entities.OrganizationServiceId;
+import com.backend.assorttis.mappers.CountryMapper;
 import com.backend.assorttis.mappers.OrganizationMapper;
 import com.backend.assorttis.mappers.SectorMapper;
 import com.backend.assorttis.repository.*;
@@ -41,6 +42,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @RequiredArgsConstructor
 public class OrganizationService {
 
+
     private final OrganizationRepository organizationRepository;
     private final OrganizationMapper organizationMapper;
     private final OrganizationTypeRepository organizationTypeRepository;
@@ -58,7 +60,14 @@ public class OrganizationService {
     private final OrganizationUserRepository organizationUserRepository;
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
+    private final OrganizationUserRepository organizationUserRepository;
+
     private final PartnershipRepository partnershipRepository;
+    private final OrganizationSubscriptionSectorRepository subscriptionSectorRepository;
+    private final OrganizationSubscriptionCountryRepository subscriptionCountryRepository;
+
+    private final SectorMapper sectorMapper;
+    private final CountryMapper countryMapper;
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
@@ -89,6 +98,26 @@ public class OrganizationService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getSubscriptionSectors(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> oss.getSector().getCode())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.backend.assorttis.dto.sector.SectorDTO> getSubscriptionSectorDTOs(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> sectorMapper.toSectorDTO(oss.getSector()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryDTO> getSubscriptionCountryDTOs(Long organizationId) {
+        return subscriptionCountryRepository.findById_OrganizationId(organizationId).stream()
+                .map(osc -> countryMapper.toDTO(osc.getCountry()))
+                .collect(Collectors.toList());
+    }
     @Transactional(readOnly = true)
     public OrganizationDTO getCurrentOrganization(String userEmail) {
         return organizationMapper.toDTO(resolveCurrentOrganization(userEmail));
@@ -290,4 +319,13 @@ public class OrganizationService {
         return StringUtils.hasText(value) ? value.trim() : fallback;
     }
 
+
+
+
+    @Transactional(readOnly = true)
+    public Long getOrganizationIdByUserId(Long userId) {
+        return organizationUserRepository.findFirstByUserId(userId)
+                .map(ou -> ou.getOrganization().getId())
+                .orElse(null);
+    }
 }

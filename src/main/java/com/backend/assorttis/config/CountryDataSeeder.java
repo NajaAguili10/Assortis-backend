@@ -40,6 +40,7 @@ public class CountryDataSeeder implements CommandLineRunner {
         for (CountryInput input : countries) {
             if (countryRepository.findByCode(input.code).isEmpty()) {
                 Country country = new Country();
+                country.setId(countryIdCounter.getAndIncrement());
                 country.setCode(input.code);
                 country.setName(input.name);
                 country.setIsActive(true);

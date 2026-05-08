@@ -85,7 +85,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // Link Org User to Organization 19 (instead of the newly created one, to match experts)
         Organization targetOrgForUser = organizationRepository.findById(19L).orElse(organization);
-        
+
         OrganizationUser orgUserMembership = new OrganizationUser();
         OrganizationUserId orgUserId = new OrganizationUserId();
         orgUserId.setOrganizationId(targetOrgForUser.getId());
@@ -105,7 +105,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 OrganizationUserId id77 = new OrganizationUserId();
                 id77.setOrganizationId(7L);
                 id77.setUserId(7L);
-                
+
                 if (!organizationUserRepository.existsById(id77)) {
                     OrganizationUser membership77 = new OrganizationUser();
                     membership77.setId(id77);
@@ -184,7 +184,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         RolePermissionId id = new RolePermissionId()
                 .setRoleId(role.getId())
                 .setPermissionId(permission.getId());
-        
+
         if (!rolePermissionRepository.existsById(id)) {
             RolePermission rolePermission = new RolePermission();
             rolePermission.setId(id);
@@ -222,7 +222,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .setRoleId(role.getId())
                 .setScopeType("GLOBAL")
                 .setScopeId(0L);
-        
+
         if (!userRoleRepository.existsById(id)) {
             UserRole userRole = new UserRole();
             userRole.setId(id);

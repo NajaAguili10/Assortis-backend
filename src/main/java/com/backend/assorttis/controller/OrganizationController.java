@@ -35,6 +35,7 @@ public class OrganizationController {
     public List<OrganizationDTO> getAllOrganizationsByOrganization() {
         return organizationService.getAllOrganizations();
     }
+
     @GetMapping("/kpis")
     public OrganizationKPIsDTO getKPIs() {
         return organizationService.getKPIs();
@@ -59,28 +60,29 @@ public class OrganizationController {
     public List<String> getSubscriptionSectors(@PathVariable Long orgId) {
         return organizationService.getSubscriptionSectors(orgId);
     }
-   /* @GetMapping("/filters")
-    public OrganizationFiltersDataDTO getFiltersData() {
-        return organizationService.getFiltersData();
 
-*/
-/*   @GetMapping("/my-subscription-sectors")
-   @PreAuthorize("isAuthenticated()")
-   public List<SectorDTO> getMySubscriptionSectors() {
-       UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-       Long userId = userDetails.getId();
+    /* @GetMapping("/filters")
+       public OrganizationFiltersDataDTO getFiltersData() {
+           return organizationService.getFiltersData();
 
-       // Try organization first
-       Long orgId = organizationService.getOrganizationIdByUserId(userId);
-       if (orgId != null) {
-           return organizationService.getSubscriptionSectorDTOs(orgId);
-       }
+   */
+    @GetMapping("/my-subscription-sectors")
+    @PreAuthorize("isAuthenticated()")
+    public List<SectorDTO> getMySubscriptionSectors() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userDetails.getId();
+
+        // Try organization first
+        Long orgId = organizationService.getOrganizationIdByUserId(userId);
+        if (orgId != null) {
+            return organizationService.getSubscriptionSectorDTOs(orgId);
+        }
 
 
 
-       // Return empty list instead of throwing exception
-       return new ArrayList<>();
-   }
+        // Return empty list instead of throwing exception
+        return new ArrayList<>();
+    }
 
     @GetMapping("/my-subscription-countries")
     @PreAuthorize("isAuthenticated()")
@@ -93,7 +95,7 @@ public class OrganizationController {
         }
         return new ArrayList<>();
     }
-
+/*
     @GetMapping("/saved-searches/{userId}")
     public List<OrganizationSavedSearchDTO> getSavedSearches(@PathVariable Long userId) {
         return organizationService.getSavedSearches(userId);
@@ -109,4 +111,5 @@ public class OrganizationController {
         organizationService.deleteSavedSearch(id);
     }
  */
+
 }

@@ -33,7 +33,12 @@ public class ExpertService {
                 .map(expertMapper::toDTO)
                 .collect(Collectors.toList());
     }
-
+    @Transactional(readOnly = true)
+    public List<ExpertDTO> getExpertsByOrganizationId(Long organizationId) {
+        return expertRepository.findByPrimaryOrganizationId(organizationId).stream()
+                .map(expertMapper::toDTO)
+                .collect(Collectors.toList());
+    }
     @Transactional(readOnly = true)
     public ExpertSearchResponse searchExperts(ExpertSearchRequest filters, Pageable pageable) {
         Page<Expert> page = expertRepository.findAll(buildSpecification(filters), pageable);

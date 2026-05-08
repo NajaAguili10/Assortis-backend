@@ -61,4 +61,9 @@ public class ExpertController {
         }
         return Sort.by(direction, field);
     }
+
+    @GetMapping("/organization/{orgId}")
+    public ResponseEntity<List<ExpertDTO>> getExpertsByOrganizationId(@org.springframework.web.bind.annotation.PathVariable Long orgId) {
+        return ResponseEntity.ok(expertService.getExpertsByOrganizationId(orgId));
+    }
 }
