@@ -19,7 +19,7 @@ mvnw.cmd
 src
 
 # ── Build output – exclude everything EXCEPT the fat JAR ────
-target/
+target/*
 !target/*.jar
 
 # ── Documentation ────────────────────────────────────────────
