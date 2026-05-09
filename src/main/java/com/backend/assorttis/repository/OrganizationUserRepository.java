@@ -64,4 +64,31 @@ public interface OrganizationUserRepository
             order by ou.joinedAt asc
             """)
     List<OrganizationUser> findMembersByOrganizationId(@Param("organizationId") Long organizationId);
+
+    @Query("""
+            select ou from OrganizationUser ou
+            join fetch ou.organization
+            join fetch ou.user
+            where ou.organization.id = :organizationId
+              and ou.user.id = :userId
+            """)
+    Optional<OrganizationUser> findMemberByOrganizationIdAndUserId(
+            @Param("organizationId") Long organizationId,
+            @Param("userId") Long userId
+    );
+
+    @Query("""
+            select distinct ou.department from OrganizationUser ou
+            where ou.department is not null and trim(ou.department) <> ''
+            order by ou.department asc
+            """)
+    List<String> findDistinctDepartments();
+
+    @Query("""
+            select distinct ou.department from OrganizationUser ou
+            where ou.organization.id = :organizationId
+              and ou.department is not null and trim(ou.department) <> ''
+            order by ou.department asc
+            """)
+    List<String> findDistinctDepartmentsByOrganizationId(@Param("organizationId") Long organizationId);
 }
