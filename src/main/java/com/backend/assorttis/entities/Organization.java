@@ -66,6 +66,10 @@ public class Organization {
     private String equipmentInfrastructure;
     private String contactName;
     private String contactTitle;
+    private String operatingRegionsRaw;
+    private Long profileProjectsCompleted;
+    private String cityNameOverride;
+    private String countryNameOverride;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -310,5 +314,27 @@ public class Organization {
     @Column(name = "contact_title")
     public String getContactTitle() {
         return contactTitle;
+    }
+
+    @Column(name = "operating_regions", length = Integer.MAX_VALUE)
+    public String getOperatingRegionsRaw() {
+        return operatingRegionsRaw;
+    }
+
+    @Column(name = "profile_projects_completed")
+    public Long getProfileProjectsCompleted() {
+        return profileProjectsCompleted;
+    }
+
+    @Size(max = 255)
+    @Column(name = "city_name_override")
+    public String getCityNameOverride() {
+        return cityNameOverride;
+    }
+
+    @Size(max = 255)
+    @Column(name = "country_name_override")
+    public String getCountryNameOverride() {
+        return countryNameOverride;
     }
 }

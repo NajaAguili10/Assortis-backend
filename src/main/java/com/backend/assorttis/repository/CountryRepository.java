@@ -10,4 +10,5 @@ public interface CountryRepository extends JpaRepository<Country, Long>, JpaSpec
     Optional<Country> findByCode(String code);
     Optional<Country> findByName(String name);
     Optional<Country> findByNameIgnoreCase(String name);
+
 }

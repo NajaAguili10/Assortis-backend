@@ -1,5 +1,6 @@
 package com.backend.assorttis.service;
 
+import com.backend.assorttis.dto.organization.OrganizationTeamMemberUpdateRequest;
 import com.backend.assorttis.dto.organization.OrganizationTeamMembersDTO;
 import com.backend.assorttis.entities.Organization;
 import com.backend.assorttis.entities.OrganizationUser;
@@ -9,9 +10,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @Slf4j
@@ -85,6 +92,67 @@ public class TeamMemberService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getAvailableDepartmentsForUser(Long userId) {
+        Organization organization = resolveCurrentOrganization(userId);
+
+        Set<String> departments = new LinkedHashSet<>();
+        organizationUserRepository.findDistinctDepartmentsByOrganizationId(organization.getId()).stream()
+                .map(this::normalizeDepartment)
+                .filter(StringUtils::hasText)
+                .forEach(departments::add);
+        organizationUserRepository.findDistinctDepartments().stream()
+                .map(this::normalizeDepartment)
+                .filter(StringUtils::hasText)
+                .forEach(departments::add);
+
+        return departments.stream().toList();
+    }
+
+    @Transactional
+    public OrganizationTeamMembersDTO.TeamMemberDTO updateCurrentOrganizationMember(
+            Long actingUserId,
+            Long memberUserId,
+            OrganizationTeamMemberUpdateRequest request
+    ) {
+        Organization organization = resolveCurrentOrganization(actingUserId);
+
+        OrganizationUser member = organizationUserRepository
+                .findMemberByOrganizationIdAndUserId(organization.getId(), memberUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Organization member not found"));
+
+        String normalizedRole = normalizeRole(request.getRole());
+        member.setRole(normalizedRole);
+        member.setIsAdmin("admin".equals(normalizedRole));
+        member.setDepartment(blankToNull(request.getDepartment()));
+        member.setMembershipStatus(normalizeStatus(request.getStatus()));
+
+        OrganizationUser savedMember = organizationUserRepository.save(member);
+        return toDTO(savedMember);
+    }
+
+    @Transactional
+    public void deleteCurrentOrganizationMember(Long actingUserId, Long memberUserId) {
+        Organization organization = resolveCurrentOrganization(actingUserId);
+
+        OrganizationUser member = organizationUserRepository
+                .findMemberByOrganizationIdAndUserId(organization.getId(), memberUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Organization member not found"));
+
+        organizationUserRepository.delete(member);
+    }
+
+    private Organization resolveCurrentOrganization(Long userId) {
+        return organizationUserRepository.findMembershipsByUserId(userId).stream()
+                .filter(membership -> !"inactive".equalsIgnoreCase(nullToEmpty(membership.getMembershipStatus())))
+                .map(OrganizationUser::getOrganization)
+                .findFirst()
+                .orElseGet(() -> teamMemberRepository.findMembershipsByUserId(userId).stream()
+                        .map(teamMember -> teamMember.getTeam().getOrganization())
+                        .findFirst()
+                        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No organization found for user")));
+    }
+
     private OrganizationTeamMembersDTO.OrganizationSummaryDTO toOrganizationSummary(Organization organization) {
         return OrganizationTeamMembersDTO.OrganizationSummaryDTO.builder()
                 .id(organization.getId())
@@ -122,6 +190,30 @@ public class TeamMemberService {
                 .status(Boolean.FALSE.equals(member.getUser().getIsActive()) ? "inactive" : "active")
                 .joinedAt(member.getJoinedAt())
                 .build();
+    }
+
+    private String normalizeRole(String role) {
+        String normalizedRole = nullToEmpty(role).trim().toLowerCase();
+        return switch (normalizedRole) {
+            case "admin", "member", "viewer" -> normalizedRole;
+            default -> "member";
+        };
+    }
+
+    private String normalizeStatus(String status) {
+        String normalizedStatus = nullToEmpty(status).trim().toLowerCase();
+        return switch (normalizedStatus) {
+            case "pending", "inactive", "active" -> normalizedStatus;
+            default -> "active";
+        };
+    }
+
+    private String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String normalizeDepartment(String department) {
+        return StringUtils.hasText(department) ? department.trim() : null;
     }
 
     private String nullToEmpty(String value) {

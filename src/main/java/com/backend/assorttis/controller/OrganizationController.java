@@ -1,5 +1,6 @@
 package com.backend.assorttis.controller;
 
+import com.backend.assorttis.dto.organization.CurrentOrganizationUpdateRequest;
 import com.backend.assorttis.dto.location.CountryDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
@@ -9,6 +10,7 @@ import com.backend.assorttis.security.services.UserDetailsImpl;
 import com.backend.assorttis.service.ExpertService;
 import com.backend.assorttis.service.OrganizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,7 @@ public class OrganizationController {
         return "pong";
     }
 
+
     @GetMapping
     public List<OrganizationDTO> getAllOrganizationsByOrganization() {
         return organizationService.getAllOrganizations();
@@ -40,12 +43,31 @@ public class OrganizationController {
         return organizationService.getKPIs();
     }
 
+    @GetMapping("/me")
+    public OrganizationDTO getCurrentOrganization(Authentication authentication) {
+        return organizationService.getCurrentOrganization(authentication != null ? authentication.getName() : null);
+    }
+
+    @PutMapping("/me")
+    public OrganizationDTO updateCurrentOrganization(
+            Authentication authentication,
+            @RequestBody CurrentOrganizationUpdateRequest request
+    ) {
+        return organizationService.updateCurrentOrganization(
+                authentication != null ? authentication.getName() : null,
+                request
+        );
+    }
     @GetMapping("/{orgId}/subscription-sectors")
     public List<String> getSubscriptionSectors(@PathVariable Long orgId) {
         return organizationService.getSubscriptionSectors(orgId);
     }
 
+    /* @GetMapping("/filters")
+       public OrganizationFiltersDataDTO getFiltersData() {
+           return organizationService.getFiltersData();
 
+   */
     @GetMapping("/my-subscription-sectors")
     @PreAuthorize("isAuthenticated()")
     public List<SectorDTO> getMySubscriptionSectors() {

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -20,6 +21,8 @@ public class OrganizationMapper {
     private final ProjectRepository projectRepository;
     private final OrganizationSectorRepository organizationSectorRepository;
     private final OrganizationSubsectorRepository organizationSubsectorRepository;
+    private final OrganizationLanguageRepository organizationLanguageRepository;
+    private final OrganizationServiceRepository organizationServiceRepository;
     private final PartnershipRepository partnershipRepository;
     private final OrganizationCertificationRepository organizationCertificationRepository;
     private final TeamMemberRepository teamMemberRepository;
@@ -30,6 +33,8 @@ public class OrganizationMapper {
                               ProjectRepository projectRepository,
                               OrganizationSectorRepository organizationSectorRepository,
                               OrganizationSubsectorRepository organizationSubsectorRepository,
+                              OrganizationLanguageRepository organizationLanguageRepository,
+                              OrganizationServiceRepository organizationServiceRepository,
                               PartnershipRepository partnershipRepository,
                               OrganizationCertificationRepository organizationCertificationRepository,
                               TeamMemberRepository teamMemberRepository,
@@ -38,6 +43,8 @@ public class OrganizationMapper {
         this.projectRepository = projectRepository;
         this.organizationSectorRepository = organizationSectorRepository;
         this.organizationSubsectorRepository = organizationSubsectorRepository;
+        this.organizationLanguageRepository = organizationLanguageRepository;
+        this.organizationServiceRepository = organizationServiceRepository;
         this.partnershipRepository = partnershipRepository;
         this.organizationCertificationRepository = organizationCertificationRepository;
         this.teamMemberRepository = teamMemberRepository;
@@ -85,6 +92,14 @@ public class OrganizationMapper {
         dto.setEquipmentInfrastructure(organization.getEquipmentInfrastructure());
         dto.setContactName(organization.getContactName());
         dto.setContactTitle(organization.getContactTitle());
+        dto.setOperatingRegions(organization.getOperatingRegionsRaw() == null || organization.getOperatingRegionsRaw().isBlank()
+                ? (organization.getRegion() == null || organization.getRegion().isBlank()
+                    ? List.of()
+                    : List.of(organization.getRegion()))
+                : Arrays.stream(organization.getOperatingRegionsRaw().split(","))
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .toList());
 
         // Country Mapping
         OrganizationDTO.CountryDTO countryDTO = new OrganizationDTO.CountryDTO();
@@ -92,7 +107,10 @@ public class OrganizationMapper {
             countryDTO.setId(organization.getCountry().getId());
             countryDTO.setName(organization.getCountry().getName());
             countryDTO.setCode(organization.getCountry().getCode());
-        } 
+        }
+        if (organization.getCountryNameOverride() != null && !organization.getCountryNameOverride().isBlank()) {
+            countryDTO.setName(organization.getCountryNameOverride());
+        }
         dto.setCountry(countryDTO);
 
         // City Mapping
@@ -100,8 +118,11 @@ public class OrganizationMapper {
         if (organization.getCity() != null) {
             cityDTO.setId(organization.getCity().getId());
             cityDTO.setName(organization.getCity().getName());
-        } else {
+        } else if (organization.getCityNameOverride() == null || organization.getCityNameOverride().isBlank()) {
             cityDTO.setName("N/A");
+        }
+        if (organization.getCityNameOverride() != null && !organization.getCityNameOverride().isBlank()) {
+            cityDTO.setName(organization.getCityNameOverride());
         }
         dto.setCity(cityDTO);
 
@@ -148,7 +169,9 @@ public class OrganizationMapper {
                 .map(po -> po.getProject())
                 .filter(p -> p != null && ProjectStatus.COMPLETED.equals(p.getStatus()))
                 .count();
-            dto.setCompletedProjects(completedCount);
+            dto.setCompletedProjects(organization.getProfileProjectsCompleted() != null
+                    ? organization.getProfileProjectsCompleted()
+                    : completedCount);
 
             BigDecimal totalBudget = orgProjectOrgs.stream()
                 .map(po -> po.getProject())
@@ -158,7 +181,9 @@ public class OrganizationMapper {
             dto.setBudget(totalBudget);
         } catch (Exception e) {
             dto.setActiveProjects(0L);
-            dto.setCompletedProjects(0L);
+            dto.setCompletedProjects(organization.getProfileProjectsCompleted() != null
+                    ? organization.getProfileProjectsCompleted()
+                    : 0L);
             dto.setBudget(BigDecimal.ZERO);
         }
 
@@ -169,6 +194,18 @@ public class OrganizationMapper {
                              (p.getPartnerOrganization() != null && p.getPartnerOrganization().getId().equals(organization.getId())))
                 .count();
             dto.setPartnerships(count);
+            dto.setPartnershipNames(partnerships.stream()
+                .filter(p -> (p.getOrganization() != null && p.getOrganization().getId().equals(organization.getId())) ||
+                             (p.getPartnerOrganization() != null && p.getPartnerOrganization().getId().equals(organization.getId())))
+                .map(p -> {
+                    if (p.getOrganization() != null && p.getOrganization().getId().equals(organization.getId())) {
+                        return p.getPartnerOrganization() != null ? p.getPartnerOrganization().getName() : null;
+                    }
+                    return p.getOrganization() != null ? p.getOrganization().getName() : null;
+                })
+                .filter(name -> name != null && !name.isBlank())
+                .distinct()
+                .toList());
         } catch (Exception e) {
             dto.setPartnerships(0L);
         }
@@ -242,6 +279,28 @@ public class OrganizationMapper {
                 })
                 .toList();
             dto.setSubsectors(mappedSubsectors);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            dto.setLanguages(organizationLanguageRepository.findByOrganizationId(organization.getId()).stream()
+                    .map(OrganizationLanguage::getLanguageCode)
+                    .filter(language -> language != null && language.getName() != null && !language.getName().isBlank())
+                    .map(Language::getName)
+                    .distinct()
+                    .toList());
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            dto.setServices(organizationServiceRepository.findByOrganizationId(organization.getId()).stream()
+                    .map(OrganizationService::getService)
+                    .filter(service -> service != null && service.getLabel() != null && !service.getLabel().isBlank())
+                    .map(Service::getLabel)
+                    .distinct()
+                    .toList());
         } catch (Exception e) {
             // ignore
         }

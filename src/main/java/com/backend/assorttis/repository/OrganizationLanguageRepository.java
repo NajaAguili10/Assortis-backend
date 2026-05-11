@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface OrganizationLanguageRepository extends JpaRepository<OrganizationLanguage, OrganizationLanguageId>,
         JpaSpecificationExecutor<OrganizationLanguage> {
+    java.util.List<OrganizationLanguage> findByOrganizationId(Long organizationId);
 }
