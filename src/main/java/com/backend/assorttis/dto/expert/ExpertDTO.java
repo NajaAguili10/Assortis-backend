@@ -1,6 +1,7 @@
 package com.backend.assorttis.dto.expert;
 
 import com.backend.assorttis.dto.organization.OrganizationDTO;
+import com.backend.assorttis.dto.sector.SectorDTO;
 import com.backend.assorttis.entities.*;
 import lombok.Data;
 import java.math.BigDecimal;

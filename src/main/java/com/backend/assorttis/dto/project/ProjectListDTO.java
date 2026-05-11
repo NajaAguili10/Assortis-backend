@@ -1,5 +1,7 @@
 package com.backend.assorttis.dto.project;
 
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
+import com.backend.assorttis.entities.enums.project.ProjectTypeEnum;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,12 +20,12 @@ public class ProjectListDTO {
     private String type;
 
     // Location
-    private CountryDTO country;
-    private CityDTO city;
+    private String country;
+    private String city;
     private String region;
 
     // Sector
-    private SectorDTO mainSector;
+    private String sector;
     private List<String> subsectors;
 
     // Budget
@@ -65,25 +67,6 @@ public class ProjectListDTO {
         private Integer completionPercentage;
     }
 
-    @Data
-    public static class CountryDTO {
-        private Long id;
-        private String name;
-        private String code;
-    }
-
-    @Data
-    public static class CityDTO {
-        private Long id;
-        private String name;
-    }
-
-    @Data
-    public static class SectorDTO {
-        private Long id;
-        private String name;
-        private String code;
-    }
 
     @Data
     public static class DonorDTO {

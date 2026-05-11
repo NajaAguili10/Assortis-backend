@@ -24,6 +24,11 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
     private final ExpertService expertService;
+    
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
 
     @GetMapping
     public List<OrganizationDTO> getAllOrganizationsByOrganization() {
@@ -70,21 +75,27 @@ public class OrganizationController {
         }
         return new ArrayList<>();
     }
-/*
+
     @GetMapping("/saved-searches/{userId}")
-    public List<OrganizationSavedSearchDTO> getSavedSearches(@PathVariable Long userId) {
+    @PreAuthorize("isAuthenticated()")
+    public List<OrganizationSavedSearchDTO> getSavedSearches(@PathVariable("userId") Long userId) {
+        System.out.println("GET /saved-searches/" + userId);
         return organizationService.getSavedSearches(userId);
     }
 
     @PostMapping("/saved-searches/{userId}")
-    public OrganizationSavedSearchDTO saveSearch(@PathVariable Long userId, @RequestParam String name, @RequestBody Map<String, Object> payload) {
+    @PreAuthorize("isAuthenticated()")
+    public OrganizationSavedSearchDTO saveSearch(@PathVariable("userId") Long userId, @RequestParam("name") String name, @RequestBody Map<String, Object> payload) {
+        System.out.println("POST /saved-searches/" + userId + " name: " + name);
         return organizationService.saveSearch(userId, name, payload);
     }
 
     @DeleteMapping("/saved-searches/{id}")
+    @PreAuthorize("isAuthenticated()")
     public void deleteSavedSearch(@PathVariable Long id) {
+        System.out.println("DELETE /saved-searches/" + id);
         organizationService.deleteSavedSearch(id);
     }
- */
+
 
 }

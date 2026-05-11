@@ -92,4 +92,25 @@ public class AuthController {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
     }
   }
+
+  @PostMapping("/forgot-password")
+  public ResponseEntity<?> forgotPassword(@Valid @RequestBody com.backend.assorttis.dto.auth.ForgotPasswordRequest request) {
+    try {
+        authService.initiatePasswordReset(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+    } catch (Exception e) {
+        // Return OK even if email not found for security, or return error if preferred
+        return ResponseEntity.ok(Map.of("message", "If an account exists, a reset link has been sent."));
+    }
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<?> resetPassword(@Valid @RequestBody com.backend.assorttis.dto.auth.ResetPasswordRequest request) {
+    try {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+  }
 }

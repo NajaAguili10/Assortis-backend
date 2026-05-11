@@ -26,6 +26,7 @@ public class ExpertService {
 
     private final ExpertRepository expertRepository;
     private final ExpertMapper expertMapper;
+    private final com.backend.assorttis.repository.InvitationRepository invitationRepository;
 
     @Transactional(readOnly = true)
     public List<ExpertDTO> getAllExperts() {
@@ -179,6 +180,18 @@ public class ExpertService {
         List<Predicate> sectorPredicates = new java.util.ArrayList<>();
         addOrLike(sectorPredicates, cb, mainSector.get("name"), sectors);
 
+        // Check in ExpertSubscriptionSector
+        if (hasValues(sectors)) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<ExpertSubscriptionSector> subSector = subquery.from(ExpertSubscriptionSector.class);
+            Join<ExpertSubscriptionSector, Sector> s = subSector.join("sector", JoinType.INNER);
+            List<Predicate> subPredicates = new java.util.ArrayList<>();
+            subPredicates.add(cb.equal(subSector.get("expert").get("id"), root.get("id")));
+            addOrLike(subPredicates, cb, s.get("name"), sectors);
+            subquery.select(subSector.get("expert").get("id")).where(cb.and(subPredicates.toArray(Predicate[]::new)));
+            sectorPredicates.add(cb.exists(subquery));
+        }
+
         if (hasValues(subSectors)) {
             Subquery<Long> subquery = query.subquery(Long.class);
             Root<ExpertExperience> experience = subquery.from(ExpertExperience.class);
@@ -292,5 +305,32 @@ public class ExpertService {
         if (normalized.contains("5")) return LocalDate.now().minusYears(5);
         if (normalized.contains("10") && !normalized.contains("more")) return LocalDate.now().minusYears(10);
         return null;
+    }
+
+    private final com.backend.assorttis.repository.ExpertSavedSearchRepository savedSearchRepository;
+    private final com.backend.assorttis.repository.UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public List<com.backend.assorttis.dto.expert.ExpertSavedSearchDTO> getSavedSearches(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return savedSearchRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(expertMapper::toSavedSearchDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public com.backend.assorttis.dto.expert.ExpertSavedSearchDTO saveSearch(Long userId, String name, java.util.Map<String, Object> payload) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        com.backend.assorttis.entities.ExpertSavedSearch savedSearch = new com.backend.assorttis.entities.ExpertSavedSearch()
+                .setUser(user)
+                .setName(name)
+                .setPayload(payload)
+                .setCreatedAt(java.time.Instant.now());
+        return expertMapper.toSavedSearchDTO(savedSearchRepository.save(savedSearch));
+    }
+
+    @Transactional
+    public void deleteSavedSearch(Long id) {
+        savedSearchRepository.deleteById(id);
     }
 }

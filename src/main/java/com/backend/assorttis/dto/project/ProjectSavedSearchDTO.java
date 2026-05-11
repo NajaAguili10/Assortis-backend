@@ -1,13 +1,13 @@
-package com.backend.assorttis.dto.organization;
+package com.backend.assorttis.dto.project;
 
 import lombok.Data;
 import java.time.Instant;
 import java.util.Map;
 
 @Data
-public class OrganizationSavedSearchDTO {
+public class ProjectSavedSearchDTO {
     private Long id;
-    private String label;
+    private String name;
     private Map<String, Object> payload;
     private Instant createdAt;
 }

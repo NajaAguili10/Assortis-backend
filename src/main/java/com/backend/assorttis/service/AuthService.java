@@ -32,19 +32,49 @@ public class AuthService {
     private final OrganizationSubscriptionCountryRepository organizationSubscriptionCountryRepository;
     private final OrganizationUserRepository organizationUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CityRepository cityRepository;
+    private  final CountryRepository CountryRepository;
 
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
+    private final Map<String, String> resetTokens = new ConcurrentHashMap<>();
+
+    public void initiatePasswordReset(String email) {
+        final String normalizedEmail = email.toLowerCase().trim();
+        userRepository.findByEmail(normalizedEmail)
+            .orElseThrow(() -> new RuntimeException("No account found with this email address."));
+        
+        String token = java.util.UUID.randomUUID().toString();
+        resetTokens.put(token, normalizedEmail);
+        
+        try {
+            mailService.sendPasswordResetEmail(normalizedEmail, token);
+        } catch (Exception e) {
+            // Log error but don't fail the request
+        }
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        String email = resetTokens.get(token);
+        if (email == null) {
+            throw new RuntimeException("Invalid or expired reset token.");
+        }
+        
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found."));
+            
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        resetTokens.remove(token);
+    }
 
     public void sendVerificationCode(String email) {
         final String normalizedEmail = email.toLowerCase().trim();
         String code = String.format("%06d", new Random().nextInt(999999));
         verificationCodes.put(normalizedEmail, code);
         
-        // Print to console (Primary way for now)
-        System.out.println("\n==================================================");
-        System.out.println("VERIFICATION CODE FOR: " + normalizedEmail);
-        System.out.println("CODE: " + code);
-        System.out.println("==================================================\n");
+        // Send real email
 
         // Attempt real email (will fallback to console if SMTP disabled)
         try {
@@ -77,6 +107,37 @@ public class AuthService {
         verificationCodes.remove(normalizedEmail);
     }
 
+    private Country findCountry(String val) {
+        if (val == null || val.trim().isEmpty()) return null;
+        String trimmed = val.trim();
+        return countryRepository.findByNameIgnoreCase(trimmed)
+                .or(() -> countryRepository.findByName(trimmed))
+                .or(() -> countryRepository.findByCode(trimmed))
+                .or(() -> {
+                    try {
+                        return countryRepository.findById(Long.parseLong(trimmed));
+                    } catch (Exception e) {
+                        return java.util.Optional.empty();
+                    }
+                })
+                .orElse(null);
+    }
+
+    private City findCity(String val) {
+        if (val == null || val.trim().isEmpty()) return null;
+        String trimmed = val.trim();
+        return cityRepository.findByNameIgnoreCase(trimmed)
+                .or(() -> cityRepository.findByName(trimmed))
+                .or(() -> {
+                    try {
+                        return cityRepository.findById(Long.parseLong(trimmed));
+                    } catch (Exception e) {
+                        return java.util.Optional.empty();
+                    }
+                })
+                .orElse(null);
+    }
+
     @Transactional
     public User registerUser(SignupRequest signUpRequest) {
         final String normalizedEmail = signUpRequest.getEmail() != null ? signUpRequest.getEmail().toLowerCase().trim() : null;
@@ -92,6 +153,15 @@ public class AuthService {
             .setEmailVerified(false)
             .setNewsletterOptIn(signUpRequest.getNewsletterTenders() != null ? signUpRequest.getNewsletterTenders() : false)
             .setCreatedAt(Instant.now());
+
+        // Set User Location (Robust)
+        if ("organization".equalsIgnoreCase(signUpRequest.getAccountType())) {
+            user.setCountry(findCountry(signUpRequest.getOrgCountry()));
+            user.setCity(findCity(signUpRequest.getOrgCity()));
+        } else {
+            user.setCountry(findCountry(signUpRequest.getCountry()));
+            user.setCity(findCity(signUpRequest.getCity()));
+        }
 
         if ("organization".equalsIgnoreCase(signUpRequest.getAccountType())) {
             String name = signUpRequest.getContactPersonName() != null ? signUpRequest.getContactPersonName() : signUpRequest.getOrgName();
@@ -141,7 +211,20 @@ public class AuthService {
             org.setCreatedAt(Instant.now());
             org.setIsActive(true);
             
-            final Organization savedOrg = organizationRepository.save(org);
+            // Set Organization Location (Robust)
+            Country c = findCountry(signUpRequest.getOrgCountry());
+            City ct = findCity(signUpRequest.getOrgCity());
+            
+            if (c != null) {
+                System.out.println("DEBUG: Setting country for org: " + c.getName());
+                org.setCountry(c);
+            }
+            if (ct != null) {
+                System.out.println("DEBUG: Setting city for org: " + ct.getName());
+                org.setCity(ct);
+            }
+            
+            final Organization savedOrg = organizationRepository.saveAndFlush(org);
 
             // Link user to organization
             OrganizationUserId ouId = new OrganizationUserId();
@@ -206,6 +289,19 @@ public class AuthService {
             expert.setVerificationStatus(VerificationStatus.PENDING);
             expert.setCreatedAt(Instant.now());
             expert.setVisibility(true);
+            
+            // Set Expert Location (Robust)
+            Country c = findCountry(signUpRequest.getCountry());
+            City ct = findCity(signUpRequest.getCity());
+            
+            if (c != null) {
+                System.out.println("DEBUG: Setting country for expert: " + c.getName());
+                expert.setCountry(c);
+            }
+            if (ct != null) {
+                System.out.println("DEBUG: Setting city for expert: " + ct.getName());
+                expert.setCity(ct);
+            }
             
             try {
                 if (signUpRequest.getExperience() != null) {

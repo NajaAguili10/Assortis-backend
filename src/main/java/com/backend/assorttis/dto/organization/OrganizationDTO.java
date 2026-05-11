@@ -2,6 +2,7 @@ package com.backend.assorttis.dto.organization;
 
 import com.backend.assorttis.dto.sector.SubsectorDTO;
 import com.backend.assorttis.entities.OrganizationCertification;
+import com.backend.assorttis.entities.OrganizationSubsector;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.Instant;

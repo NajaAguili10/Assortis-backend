@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ExpertSubscriptionCountryRepository extends JpaRepository<ExpertSubscriptionCountry, ExpertSubscriptionCountryId> {
+    java.util.List<ExpertSubscriptionCountry> findById_ExpertId(Long expertId);
 }

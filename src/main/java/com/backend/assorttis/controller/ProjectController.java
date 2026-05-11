@@ -19,6 +19,7 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final com.backend.assorttis.service.ProjectSavedSearchService savedSearchService;
 
     @GetMapping
     public ResponseEntity<PaginatedResponseDTO<ProjectListDTO>> getProjects(
@@ -73,6 +74,11 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProjectById(id));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ProjectListDTO>> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
     private Sort parseSort(String sortBy) {
         switch (sortBy) {
             case "newest":
@@ -91,5 +97,25 @@ public class ProjectController {
             default:
                 return Sort.by(Sort.Direction.DESC, "updatedAt");
         }
+    }
+
+    @GetMapping("/saved-searches/{userId}")
+    public ResponseEntity<List<ProjectSavedSearchDTO>> getSavedSearches(@PathVariable Long userId) {
+        return ResponseEntity.ok(savedSearchService.getSavedSearches(userId));
+    }
+
+    @PostMapping("/saved-searches/{userId}")
+    public ResponseEntity<ProjectSavedSearchDTO> saveSearch(
+            @PathVariable Long userId,
+            @RequestParam String name,
+            @RequestBody java.util.Map<String, Object> payload
+    ) {
+        return ResponseEntity.ok(savedSearchService.saveSearch(userId, name, payload));
+    }
+
+    @DeleteMapping("/saved-searches/{id}")
+    public ResponseEntity<Void> deleteSavedSearch(@PathVariable Long id) {
+        savedSearchService.deleteSavedSearch(id);
+        return ResponseEntity.noContent().build();
     }
 }

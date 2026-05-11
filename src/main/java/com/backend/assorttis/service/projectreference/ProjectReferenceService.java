@@ -66,7 +66,7 @@ public class ProjectReferenceService {
         String experts = join(expertProfiles(project.getId()));
         String activities = activities(project);
         String contractValue = contractValue(project.getCurrency(), project.getBudget());
-        String typeAndScope = joinParts(List.of(project.getType(), project.getScope()));
+        String typeAndScope = joinParts(List.of(project.getType() != null ? project.getType().name() : "", project.getScope()));
         String fundingSource = joinParts(List.of(donorName, project.getFundingType()));
 
         Map<String, String> variables = new LinkedHashMap<>();

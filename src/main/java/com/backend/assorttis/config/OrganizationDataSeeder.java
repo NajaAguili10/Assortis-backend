@@ -34,7 +34,7 @@ public class OrganizationDataSeeder implements CommandLineRunner {
 
         // 1. UNICEF
         createOrganization(
-                "UNICEF", "UNICEF", "International Organization", 
+                "UNICEF", "UNICEF", "INTERNATIONAL_ORG", 
                 VerificationStatus.VERIFIED, "contact@unicef.org",
                 "United States", "US", "New York", 
                 "https://www.unicef.org", "https://logo.clearbit.com/unicef.org", 
@@ -46,7 +46,7 @@ public class OrganizationDataSeeder implements CommandLineRunner {
 
         // 2. World Bank
         createOrganization(
-                "World Bank", "WB", "International Organization", 
+                "World Bank", "WB", "INTERNATIONAL_ORG", 
                 VerificationStatus.VERIFIED, "info@worldbank.org",
                 "United States", "US", "Washington D.C.", 
                 "https://www.worldbank.org", "https://logo.clearbit.com/worldbank.org", 
@@ -82,7 +82,7 @@ public class OrganizationDataSeeder implements CommandLineRunner {
 
         // 5. UNESCO
         createOrganization(
-                "UNESCO", "UNESCO", "International Organization", 
+                "UNESCO", "UNESCO", "INTERNATIONAL_ORG", 
                 VerificationStatus.VERIFIED, "contact@unesco.org",
                 "France", "FR", "Paris", 
                 "https://www.unesco.org", null, 

@@ -4,6 +4,9 @@ import com.backend.assorttis.dto.location.CountryDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
 
 import com.backend.assorttis.dto.organization.OrganizationKPIsDTO;
+import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
+import com.backend.assorttis.entities.OrganizationSavedSearch;
+import com.backend.assorttis.entities.User;
 import com.backend.assorttis.mappers.CountryMapper;
 import com.backend.assorttis.mappers.OrganizationMapper;
 import com.backend.assorttis.mappers.SectorMapper;
@@ -14,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,5 +103,30 @@ public class OrganizationService {
         return organizationUserRepository.findFirstByUserId(userId)
                 .map(ou -> ou.getOrganization().getId())
                 .orElse(null);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<OrganizationSavedSearchDTO> getSavedSearches(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return savedSearchRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(organizationMapper::toSavedSearchDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public OrganizationSavedSearchDTO saveSearch(Long userId, String name, Map<String, Object> payload) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        OrganizationSavedSearch savedSearch = new OrganizationSavedSearch()
+                .setUser(user)
+                .setName(name)
+                .setPayload(payload)
+                .setCreatedAt(Instant.now());
+        return organizationMapper.toSavedSearchDTO(savedSearchRepository.save(savedSearch));
+    }
+
+    @Transactional
+    public void deleteSavedSearch(Long id) {
+        savedSearchRepository.deleteById(id);
     }
 }
