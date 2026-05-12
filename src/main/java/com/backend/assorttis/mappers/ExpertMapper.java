@@ -34,6 +34,8 @@ public class ExpertMapper {
         if (expert.getUser() != null) {
             dto.setFirstName(expert.getUser().getFirstName());
             dto.setLastName(expert.getUser().getLastName());
+            dto.setEmail(expert.getUser().getEmail());
+            dto.setPhone(expert.getUser().getPhone());
         }
         
         dto.setCurrentPosition(expert.getCurrentPosition());

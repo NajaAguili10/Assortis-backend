@@ -1,18 +1,28 @@
 package com.backend.assorttis.service;
 
+import com.backend.assorttis.dto.organization.OrganizationTeamInvitationRequest;
 import com.backend.assorttis.dto.organization.OrganizationTeamMemberUpdateRequest;
 import com.backend.assorttis.dto.organization.OrganizationTeamMembersDTO;
+import com.backend.assorttis.entities.Expert;
+import com.backend.assorttis.entities.Invitation;
 import com.backend.assorttis.entities.Organization;
 import com.backend.assorttis.entities.OrganizationUser;
+import com.backend.assorttis.entities.User;
+import com.backend.assorttis.repository.ExpertRepository;
+import com.backend.assorttis.repository.InvitationRepository;
 import com.backend.assorttis.repository.OrganizationUserRepository;
 import com.backend.assorttis.repository.TeamMemberRepository;
+import com.backend.assorttis.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +36,9 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class TeamMemberService {
     private final OrganizationUserRepository organizationUserRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final ExpertRepository expertRepository;
+    private final UserRepository userRepository;
+    private final InvitationRepository invitationRepository;
 
     @Transactional(readOnly = true)
     public OrganizationTeamMembersDTO getTeamMembersForUser(Long userId) {
@@ -132,6 +145,42 @@ public class TeamMemberService {
     }
 
     @Transactional
+    public Long inviteCurrentOrganizationExpert(Long actingUserId, OrganizationTeamInvitationRequest request) {
+        Organization organization = resolveCurrentOrganization(actingUserId);
+        User inviter = userRepository.findById(actingUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Inviter not found"));
+
+        if (request.getExpertId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expert is required");
+        }
+
+        Expert expert = expertRepository.findById(request.getExpertId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Expert not found"));
+        String expertEmail = expert.getUser() == null ? null : expert.getUser().getEmail();
+        String requestedEmail = normalizeEmail(request.getEmail());
+
+        if (!StringUtils.hasText(expertEmail) || !StringUtils.hasText(requestedEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expert email is required");
+        }
+
+        if (!normalizeEmail(expertEmail).equals(requestedEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invitation email does not match selected expert");
+        }
+
+        Invitation invitation = new Invitation()
+                .setInviter(inviter)
+                .setInvitee(expert)
+                .setInviterOrganization(organization)
+                .setInvitationType("TEAM_MEMBER")
+                .setMessage(blankToNull(request.getMessage()))
+                .setStatus("PENDING")
+                .setCreatedAt(Instant.now())
+                .setExpiresAt(Instant.now().plus(14, ChronoUnit.DAYS));
+
+        return invitationRepository.save(invitation).getId();
+    }
+
+    @Transactional
     public void deleteCurrentOrganizationMember(Long actingUserId, Long memberUserId) {
         Organization organization = resolveCurrentOrganization(actingUserId);
 
@@ -210,6 +259,10 @@ public class TeamMemberService {
 
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String normalizeEmail(String value) {
+        return StringUtils.hasText(value) ? value.trim().toLowerCase() : "";
     }
 
     private String normalizeDepartment(String department) {

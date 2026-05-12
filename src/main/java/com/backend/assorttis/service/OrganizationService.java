@@ -65,7 +65,6 @@ public class OrganizationService {
     private final OrganizationUserRepository organizationUserRepository;
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
-    private final OrganizationUserRepository organizationUserRepository;
 
     private final PartnershipRepository partnershipRepository;
     private final OrganizationSubscriptionSectorRepository subscriptionSectorRepository;
