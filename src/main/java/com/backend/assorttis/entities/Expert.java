@@ -24,245 +24,165 @@ import java.time.Instant;
 @Table(name = "experts", schema = "public", indexes = {
         @Index(name = "idx_experts_primary_org", columnList = "primary_organization_id")
 }, uniqueConstraints = {
-        @UniqueConstraint(name = "experts_user_id_unique", columnNames = { "user_id" })
+        @UniqueConstraint(name = "experts_user_id_unique", columnNames = {"user_id"})
 })
 public class Expert {
-    private Long id;
-
-    private User user;
-
-    private String fullName;
-    private String bio;
-
-    private String nationality;
-
-    private Integer yearsExperience;
-
-    private String currentPosition;
-
-    private BigDecimal dailyRate;
-
-
-
-    private String currency;
-
-    private String Title;
-
-    private Long completedMissions;
-
-    private Long completedProjects;
-
-    private Boolean remoteAvailable;
-
-    private String availabilityStatus;
-
-    private String profileSummary;
-
-    private BigDecimal ratingAvg;
-
-    private Boolean visibility;
-
-    private Country country;
-
-    private City city;
-
-    private BigDecimal latitude;
-
-    private BigDecimal longitude;
-
-    private VerificationStatus verificationStatus;
-
-    private Integer ratingsCount;
-
-    private Instant lastActiveAt;
-
-    private Sector mainSector;
-
-    private Integer studentsCount;
-
-    private Boolean isBidWriter;
-
-    private Instant createdAt;
-
-    private String level;
-
-    private Instant updatedAt;
-
-    private BigDecimal hourlyRate;
-
-    private BigDecimal availabilityPercentage;
-
-    private Organization primaryOrganization;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    public Long getId() {
-        return id;
-    }
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "user_id")
-    public User getUser() {
-        return user;
-    }
+    private User user;
 
     @Size(max = 255)
     @Column(name = "full_name")
-    public String getFullName() {
-        return fullName;
-    }
+    private String fullName;
+
+    // Nouveaux champs prénom / nom
+    @Size(max = 100)
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Size(max = 100)
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Column(name = "bio", length = Integer.MAX_VALUE)
+    private String bio;
 
     @Size(max = 100)
     @Column(name = "nationality", length = 100)
-    public String getNationality() {
-        return nationality;
-    }
+    private String nationality;
 
     @Column(name = "years_experience")
-    public Integer getYearsExperience() {
-        return yearsExperience;
-    }
+    private Integer yearsExperience;
 
     @Size(max = 255)
     @Column(name = "current_position")
-    public String getCurrentPosition() {
-        return currentPosition;
-    }
+    private String currentPosition;
 
     @Column(name = "daily_rate")
-    public BigDecimal getDailyRate() {
-        return dailyRate;
-    }
+    private BigDecimal dailyRate;
 
     @Size(max = 10)
     @Column(name = "currency", length = 10)
-    public String getCurrency() {
-        return currency;
-    }
+    private String currency;
+
+    @Size(max = 100)
+    @Column(name = "title", length = 100)
+    private String Title;
+
+    @Column(name = "completed_missions")
+    private Long completedMissions;
+
+    @Column(name = "completed_projects")
+    private Long completedProjects;
 
     @Column(name = "remote_available")
-    public Boolean getRemoteAvailable() {
-        return remoteAvailable;
-    }
+    private Boolean remoteAvailable;
 
     @Size(max = 50)
     @Column(name = "availability_status", length = 50)
-    public String getAvailabilityStatus() {
-        return availabilityStatus;
-    }
+    private String availabilityStatus;
+
+    // Nouveau champ pour la disponibilité à court/moyen terme
+    @Size(max = 30)
+    @Column(name = "availability_timing", length = 30)
+    private String availabilityTiming; // IMMEDIATE, WITHIN_1_MONTH, WITHIN_3_MONTHS, NOT_AVAILABLE
 
     @Column(name = "profile_summary", length = Integer.MAX_VALUE)
-    public String getProfileSummary() {
-        return profileSummary;
-    }
+    private String profileSummary;
 
     @Column(name = "rating_avg", precision = 3, scale = 2)
-    public BigDecimal getRatingAvg() {
-        return ratingAvg;
-    }
+    private BigDecimal ratingAvg;
 
     @ColumnDefault("true")
     @Column(name = "visibility")
-    public Boolean getVisibility() {
-        return visibility;
-    }
+    private Boolean visibility;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "country_id")
-    public Country getCountry() {
-        return country;
-    }
+    private Country country;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "city_id")
-    public City getCity() {
-        return city;
-    }
+    private City city;
 
     @Column(name = "latitude", precision = 9, scale = 6)
-    public BigDecimal getLatitude() {
-        return latitude;
-    }
+    private BigDecimal latitude;
 
     @Column(name = "longitude", precision = 9, scale = 6)
-    public BigDecimal getLongitude() {
-        return longitude;
-    }
-
+    private BigDecimal longitude;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", length = 20)
-    public VerificationStatus getVerificationStatus() {
-        return verificationStatus;
-    }
+    private VerificationStatus verificationStatus;
+
+    // Nouveau champ : statut du compte (différent de verificationStatus)
+    @Size(max = 20)
+    @Column(name = "account_status", length = 20)
+    private String accountStatus; // ACTIVE, INACTIVE, PENDING, VERIFIED, SUSPENDED
 
     @ColumnDefault("0")
     @Column(name = "ratings_count")
-    public Integer getRatingsCount() {
-        return ratingsCount;
-    }
+    private Integer ratingsCount;
 
     @Column(name = "last_active_at")
-    public Instant getLastActiveAt() {
-        return lastActiveAt;
-    }
+    private Instant lastActiveAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "main_sector_id")
-    public Sector getMainSector() {
-        return mainSector;
-    }
+    private Sector mainSector;
 
     @ColumnDefault("0")
     @Column(name = "students_count")
-    public Integer getStudentsCount() {
-        return studentsCount;
-    }
+    private Integer studentsCount;
 
     @ColumnDefault("false")
     @Column(name = "is_bid_writer")
-    public Boolean getIsBidWriter() {
-        return isBidWriter;
-    }
+    private Boolean isBidWriter;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    private Instant createdAt;
 
     @Size(max = 50)
     @Column(name = "level", length = 50)
-    public String getLevel() {
-        return level;
-    }
+    private String level;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+    private Instant updatedAt;
 
     @Column(name = "hourly_rate")
-    public BigDecimal getHourlyRate() {
-        return hourlyRate;
-    }
+    private BigDecimal hourlyRate;
 
     @Column(name = "availability_percentage", precision = 5, scale = 2)
-    public BigDecimal getAvailabilityPercentage() {
-        return availabilityPercentage;
-    }
+    private BigDecimal availabilityPercentage;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "primary_organization_id")
-    public Organization getPrimaryOrganization() {
-        return primaryOrganization;
-    }
+    private Organization primaryOrganization;
 
+    // Champs transients (calculés)
+    @Transient
+    private Integer activeProjects;
+
+    @Transient
+    private Double responseRate;
+
+    @Transient
+    private Integer profileCompleteness;
+
+    // Getter pour verified dérivé de verificationStatus
+    public Boolean getVerified() {
+        return verificationStatus == VerificationStatus.VERIFIED;
+    }
 }

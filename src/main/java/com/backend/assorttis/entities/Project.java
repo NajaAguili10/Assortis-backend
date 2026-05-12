@@ -194,14 +194,12 @@ public class Project {
     }
 
     @Enumerated(EnumType.STRING)
-    @Size(max = 20)
     @Column(name = "priority", length = 20)
     public ProjectPriorityEnum getPriority() {
         return priority;
     }
 
     @Enumerated(EnumType.STRING)
-    @Size(max = 50)
     @Column(name = "type", length = 50)
     public ProjectTypeEnum getType() {
         return type;
