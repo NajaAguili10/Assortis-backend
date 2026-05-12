@@ -282,5 +282,9 @@ public class Tender {
     public Boolean getIsUrgent() {
         return isUrgent;
     }
-
+    private String noticeType; // EARLY_INTELLIGENCE, FORECAST_PRIOR_NOTICE, PROJECT_NOTICE
+    private String region; // peut être dérivé du pays
+    private String alertCategory; // PROJECTS, AWARDS, SHORTLISTS, BIN
+// Les champs suivants sont calculés (transients ou via @Formula) :
+// proposalsCount, interestedOrgsCount, matchScore, mostRelevantPartnersCount, otherPossiblePartnersCount
 }

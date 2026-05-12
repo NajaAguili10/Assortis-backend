@@ -12,7 +12,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.type.SqlTypes;
-
 import java.time.Instant;
 import java.util.Map;
 
@@ -22,101 +21,64 @@ import java.util.Map;
 @ToString
 @Accessors(chain = true)
 @Entity
-@Table(name = "notifications", schema = "public", indexes = {
-        @Index(name = "idx_notifications_expires_at", columnList = "expires_at")
-})
+@Table(name = "notifications", schema = "public")
 public class Notification {
-    private Long id;
-
-    private User user;
-
-    private String type;
-
-    private String content;
-
-    private Boolean isRead;
-
-    private Map<String, Object> metadata;
-
-    private Instant createdAt;
-
-    private Boolean archived;
-
-    private Instant readAt;
-
-    private Instant expiresAt;
-
-    private String actionLabel;
-
-    private String actionLink;
-
     @Id
     @Column(name = "id", nullable = false)
-    public Long getId() {
-        return id;
-    }
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id")
-    public User getUser() {
-        return user;
-    }
+    private User user;
 
     @Size(max = 50)
     @Column(name = "type", length = 50)
-    public String getType() {
-        return type;
-    }
+    private String type;
 
     @Column(name = "content", length = Integer.MAX_VALUE)
-    public String getContent() {
-        return content;
-    }
+    private String content;
 
     @ColumnDefault("false")
     @Column(name = "is_read")
-    public Boolean getIsRead() {
-        return isRead;
-    }
+    private Boolean isRead;
 
     @Column(name = "metadata")
     @JdbcTypeCode(SqlTypes.JSON)
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
+    private Map<String, Object> metadata;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    private Instant createdAt;
 
     @ColumnDefault("false")
     @Column(name = "archived")
-    public Boolean getArchived() {
-        return archived;
-    }
+    private Boolean archived;
 
     @Column(name = "read_at")
-    public Instant getReadAt() {
-        return readAt;
-    }
+    private Instant readAt;
 
     @Column(name = "expires_at")
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
+    private Instant expiresAt;
 
     @Size(max = 100)
     @Column(name = "action_label", length = 100)
-    public String getActionLabel() {
-        return actionLabel;
-    }
+    private String actionLabel;
 
     @Column(name = "action_link", length = Integer.MAX_VALUE)
-    public String getActionLink() {
-        return actionLink;
-    }
+    private String actionLink;
 
+    // NOUVEAUX CHAMPS
+    @Column(length = 20)
+    private String priority; // LOW, MEDIUM, HIGH, URGENT
+
+    @Column(name = "title_key", length = 100)
+    private String titleKey;
+
+    @Column(name = "message_key", length = 100)
+    private String messageKey;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> params;
 }
