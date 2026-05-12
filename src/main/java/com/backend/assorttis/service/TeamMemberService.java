@@ -173,6 +173,9 @@ public class TeamMemberService {
                 .setInviterOrganization(organization)
                 .setInvitationType("TEAM_MEMBER")
                 .setMessage(blankToNull(request.getMessage()))
+                .setMemberRole(normalizeRole(request.getRole()))
+                .setMemberDepartment(blankToNull(request.getDepartment()))
+                .setMemberStatus("active")
                 .setStatus("PENDING")
                 .setCreatedAt(Instant.now())
                 .setExpiresAt(Instant.now().plus(14, ChronoUnit.DAYS));
