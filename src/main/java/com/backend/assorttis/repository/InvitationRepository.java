@@ -61,4 +61,5 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long>, J
             @Param("id") Long id,
             @Param("userId") Long userId
     );
+
 }

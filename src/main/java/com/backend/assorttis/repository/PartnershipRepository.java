@@ -20,4 +20,14 @@ public interface PartnershipRepository extends JpaRepository<Partnership, Long>,
             order by p.createdAt desc
             """)
     List<Partnership> findByOrganizationIdOrPartnerOrganizationId(@Param("organizationId") Long organizationId);
+
+    @Query("""
+            select p from Partnership p
+            where (p.organization.id = :firstOrganizationId and p.partnerOrganization.id = :secondOrganizationId)
+               or (p.organization.id = :secondOrganizationId and p.partnerOrganization.id = :firstOrganizationId)
+            """)
+    java.util.Optional<Partnership> findBetweenOrganizations(
+            @Param("firstOrganizationId") Long firstOrganizationId,
+            @Param("secondOrganizationId") Long secondOrganizationId
+    );
 }

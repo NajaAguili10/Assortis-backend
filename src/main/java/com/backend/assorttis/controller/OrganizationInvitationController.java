@@ -1,6 +1,7 @@
 package com.backend.assorttis.controller;
 
 import com.backend.assorttis.dto.organization.OrganizationInvitationDTO;
+import com.backend.assorttis.dto.organization.OrganizationInvitationCreateRequest;
 import com.backend.assorttis.dto.organization.OrganizationInvitationStatsDTO;
 import com.backend.assorttis.dto.organization.OrganizationInvitationUpdateRequest;
 import com.backend.assorttis.security.services.UserDetailsImpl;
@@ -35,6 +36,15 @@ public class OrganizationInvitationController {
     public OrganizationInvitationStatsDTO getCurrentOrganizationInvitationStats(Authentication authentication) {
         UserDetailsImpl userDetails = requireUser(authentication);
         return organizationInvitationService.getCurrentOrganizationStats(userDetails.getId());
+    }
+
+    @PostMapping
+    public OrganizationInvitationDTO createInvitation(
+            @RequestBody OrganizationInvitationCreateRequest request,
+            Authentication authentication
+    ) {
+        UserDetailsImpl userDetails = requireUser(authentication);
+        return organizationInvitationService.createInvitation(userDetails.getId(), request);
     }
 
     @PostMapping("/{invitationId}/accept")
@@ -72,4 +82,3 @@ public class OrganizationInvitationController {
         return userDetails;
     }
 }
-

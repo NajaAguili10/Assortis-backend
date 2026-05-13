@@ -1,6 +1,7 @@
 package com.backend.assorttis.service;
 
 import com.backend.assorttis.dto.organization.OrganizationInvitationDTO;
+import com.backend.assorttis.dto.organization.OrganizationInvitationCreateRequest;
 import com.backend.assorttis.dto.organization.OrganizationInvitationStatsDTO;
 import com.backend.assorttis.dto.organization.OrganizationInvitationUpdateRequest;
 import com.backend.assorttis.entities.Expert;
@@ -8,10 +9,19 @@ import com.backend.assorttis.entities.Invitation;
 import com.backend.assorttis.entities.Organization;
 import com.backend.assorttis.entities.OrganizationUser;
 import com.backend.assorttis.entities.OrganizationUserId;
+import com.backend.assorttis.entities.Partnership;
+import com.backend.assorttis.entities.Project;
+import com.backend.assorttis.entities.Tender;
 import com.backend.assorttis.entities.User;
+import com.backend.assorttis.repository.ExpertRepository;
 import com.backend.assorttis.repository.InvitationRepository;
+import com.backend.assorttis.repository.OrganizationRepository;
 import com.backend.assorttis.repository.OrganizationUserRepository;
+import com.backend.assorttis.repository.PartnershipRepository;
+import com.backend.assorttis.repository.ProjectRepository;
 import com.backend.assorttis.repository.TeamMemberRepository;
+import com.backend.assorttis.repository.TenderRepository;
+import com.backend.assorttis.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +30,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +44,12 @@ public class OrganizationInvitationService {
     private final InvitationRepository invitationRepository;
     private final OrganizationUserRepository organizationUserRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final UserRepository userRepository;
+    private final ExpertRepository expertRepository;
+    private final OrganizationRepository organizationRepository;
+    private final TenderRepository tenderRepository;
+    private final ProjectRepository projectRepository;
+    private final PartnershipRepository partnershipRepository;
 
     @Transactional(readOnly = true)
     public List<OrganizationInvitationDTO> getCurrentOrganizationInvitations(Long userId) {
@@ -64,6 +81,74 @@ public class OrganizationInvitationService {
     }
 
     @Transactional
+    public OrganizationInvitationDTO createInvitation(Long userId, OrganizationInvitationCreateRequest request) {
+        Organization organization = resolveCurrentOrganization(userId);
+        User inviter = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Inviter not found"));
+
+        Invitation invitation = new Invitation()
+                .setInviter(inviter)
+                .setInviterOrganization(organization)
+                .setInvitationType(resolveInvitationType(request))
+                .setMessage(buildStoredMessage(request))
+                .setStatus("PENDING")
+                .setCreatedAt(Instant.now())
+                .setExpiresAt(Instant.now().plusSeconds(14 * 24 * 60 * 60L));
+
+        if (request.getTenderId() != null) {
+            Tender tender = tenderRepository.findById(request.getTenderId())
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Tender not found"));
+            invitation.setTender(tender);
+        }
+
+        if (request.getProjectId() != null) {
+            Project project = projectRepository.findById(request.getProjectId())
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Project not found"));
+            invitation.setProject(project);
+        }
+
+        String recipientType = nullToEmpty(request.getRecipientType()).trim().toLowerCase();
+        if ("organization".equals(recipientType)) {
+            if (request.getOrganizationId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization recipient is required");
+            }
+
+            Organization inviteeOrganization = findOrganizationById(request.getOrganizationId());
+            if (organization.getId().equals(inviteeOrganization.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization cannot invite itself");
+            }
+            invitation.setInviteeOrganization(inviteeOrganization);
+        } else if ("expert".equals(recipientType)) {
+            if (request.getExpertId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expert recipient is required");
+            }
+
+            Expert expert = expertRepository.findById(request.getExpertId())
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Expert not found"));
+            String expertEmail = expert.getUser() == null ? null : expert.getUser().getEmail();
+            String requestedEmail = normalizeEmail(request.getEmail());
+
+            if (!StringUtils.hasText(expertEmail) || !StringUtils.hasText(requestedEmail)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expert email is required");
+            }
+
+            if (!normalizeEmail(expertEmail).equals(requestedEmail)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invitation email does not match selected expert");
+            }
+
+            invitation
+                    .setInvitee(expert)
+                    .setMemberRole("member")
+                    .setMemberStatus("active");
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported recipient type");
+        }
+
+        Invitation savedInvitation = invitationRepository.save(invitation);
+        return toDTO(savedInvitation, organization.getId(), userId);
+    }
+
+    @Transactional
     public OrganizationInvitationDTO acceptInvitation(Long userId, Long invitationId) {
         Long organizationId = resolveCurrentOrganizationId(userId).orElse(null);
         Invitation invitation = findReceivedInvitation(invitationId, organizationId, userId);
@@ -72,6 +157,7 @@ public class OrganizationInvitationService {
         invitation.setRespondedAt(Instant.now());
         Invitation savedInvitation = invitationRepository.save(invitation);
         createOrganizationMembershipForAcceptedExpert(savedInvitation);
+        createPartnershipForAcceptedOrganizationInvitation(savedInvitation);
         return toDTO(savedInvitation, organizationId, userId);
     }
 
@@ -125,6 +211,39 @@ public class OrganizationInvitationService {
     private Invitation findScopedInvitation(Long invitationId, Long organizationId) {
         return invitationRepository.findOrganizationScopedInvitation(invitationId, organizationId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Invitation not found"));
+    }
+
+    private void createPartnershipForAcceptedOrganizationInvitation(Invitation invitation) {
+        if (invitation.getInviterOrganization() == null
+                || invitation.getInviteeOrganization() == null
+                || !List.of("partnership", "consortium", "collaboration")
+                        .contains(normalizeInvitationType(invitation.getInvitationType()))) {
+            return;
+        }
+
+        Long inviterOrganizationId = invitation.getInviterOrganization().getId();
+        Long inviteeOrganizationId = invitation.getInviteeOrganization().getId();
+        if (partnershipRepository.findBetweenOrganizations(inviterOrganizationId, inviteeOrganizationId).isPresent()) {
+            return;
+        }
+
+        Long nextId = partnershipRepository.findAll().stream()
+                .map(Partnership::getId)
+                .filter(java.util.Objects::nonNull)
+                .max(Long::compareTo)
+                .orElse(0L) + 1L;
+
+        Partnership partnership = new Partnership()
+                .setId(nextId)
+                .setOrganization(invitation.getInviterOrganization())
+                .setPartnerOrganization(invitation.getInviteeOrganization())
+                .setDescription(blankToNull(invitation.getMessage()))
+                .setStartDate(LocalDate.now())
+                .setStatus("pending".equals(resolveStatus(invitation)) ? "pending" : "active")
+                .setType(normalizePartnershipType(invitation.getInvitationType()))
+                .setCreatedAt(Instant.now());
+
+        partnershipRepository.save(partnership);
     }
 
     private void createOrganizationMembershipForAcceptedExpert(Invitation invitation) {
@@ -209,6 +328,11 @@ public class OrganizationInvitationService {
                         .map(teamMember -> teamMember.getTeam().getOrganization())
                         .findFirst()
                         .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No organization found for user")));
+    }
+
+    private Organization findOrganizationById(Long organizationId) {
+        return organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Organization not found"));
     }
 
     private OrganizationInvitationDTO toDTO(Invitation invitation, Long organizationId, Long userId) {
@@ -301,6 +425,39 @@ public class OrganizationInvitationService {
         };
     }
 
+    private String resolveInvitationType(OrganizationInvitationCreateRequest request) {
+        String normalized = nullToEmpty(request.getInvitationType()).trim().toLowerCase();
+        return switch (normalized) {
+            case "partnership" -> "PARTNERSHIP";
+            case "consortium" -> "CONSORTIUM";
+            case "collaboration" -> "COLLABORATION";
+            case "team" -> "TEAM_MEMBER";
+            case "advisor" -> "ADVISOR";
+            case "consultant" -> "CONSULTANT";
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported invitation type");
+        };
+    }
+
+    private String normalizePartnershipType(String invitationType) {
+        return switch (normalizeInvitationType(invitationType)) {
+            case "partnership" -> "strategic";
+            case "consortium" -> "consortium";
+            default -> "collaboration";
+        };
+    }
+
+    private String buildStoredMessage(OrganizationInvitationCreateRequest request) {
+        String trimmedSubject = blankToNull(request.getSubject());
+        String trimmedMessage = blankToNull(request.getMessage());
+        if (trimmedSubject != null && trimmedMessage != null) {
+            return "Subject: " + trimmedSubject + "\n\n" + trimmedMessage;
+        }
+        if (trimmedSubject != null) {
+            return "Subject: " + trimmedSubject;
+        }
+        return trimmedMessage;
+    }
+
     private String resolveInvitationMemberRole(Invitation invitation) {
         String normalized = nullToEmpty(invitation.getMemberRole()).trim().toLowerCase();
         return switch (normalized) {
@@ -342,5 +499,9 @@ public class OrganizationInvitationService {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private String normalizeEmail(String email) {
+        return nullToEmpty(email).trim().toLowerCase();
     }
 }
