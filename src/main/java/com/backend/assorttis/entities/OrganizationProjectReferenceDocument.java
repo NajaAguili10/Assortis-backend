@@ -30,6 +30,7 @@ public class OrganizationProjectReferenceDocument {
 
     private Long size;
 
-    @Column(name = "content_data_url", length = 1000)
+    @Lob
+    @Column(name = "content_data_url", columnDefinition = "TEXT")
     private String contentDataUrl;
 }
