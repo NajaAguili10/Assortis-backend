@@ -8,8 +8,10 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.mapping.Map;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -149,5 +151,8 @@ public class TenderOrgInterest {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+    private String competitionLevel; // LOW, MEDIUM, HIGH
+    private Integer estimatedEffort; // heures
+    private BigDecimal potentialROI; // pourcentage
 
 }

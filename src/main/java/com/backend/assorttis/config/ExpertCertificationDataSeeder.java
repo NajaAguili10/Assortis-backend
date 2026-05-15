@@ -25,32 +25,38 @@ public class ExpertCertificationDataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        Expert expert = expertRepository.findAll().stream().findFirst().orElse(null);
-        if (expert == null) return;
+        java.util.List<Expert> experts = expertRepository.findAll();
+        if (experts.isEmpty()) return;
 
-        if (expertCertificationRepository.count() == 0) {
-            ExpertCertification cert1 = new ExpertCertification()
-                    .setId(certIdCounter.getAndIncrement())
-                    .setExpert(expert)
-                    .setName("PMP - Project Management Professional")
-                    .setIssuingOrganization("Project Management Institute (PMI)")
-                    .setIssueDate(LocalDate.of(2020, 5, 15))
-                    .setExpiryDate(LocalDate.of(2025, 5, 15))
-                    .setCredentialId("PMI-1234567")
-                    .setCredentialUrl("https://www.pmi.org/certifications/verify");
+        for (int i = 0; i < experts.size(); i++) {
+            Expert expert = experts.get(i);
             
-            ExpertCertification cert2 = new ExpertCertification()
-                    .setId(certIdCounter.getAndIncrement())
-                    .setExpert(expert)
-                    .setName("Certified ScrumMaster (CSM)")
-                    .setIssuingOrganization("Scrum Alliance")
-                    .setIssueDate(LocalDate.of(2019, 8, 10))
-                    .setExpiryDate(LocalDate.of(2024, 8, 10))
-                    .setCredentialId("CSM-9876543")
-                    .setCredentialUrl("https://www.scrumalliance.org/verify");
-
-            expertCertificationRepository.save(cert1);
-            expertCertificationRepository.save(cert2);
+            // Only assign if they don't have certifications already
+            if (expertCertificationRepository.findByExpert(expert).isEmpty()) {
+                if (i % 2 == 0) {
+                    ExpertCertification cert1 = new ExpertCertification()
+                            .setId(certIdCounter.getAndIncrement())
+                            .setExpert(expert)
+                            .setName("PMP - Project Management Professional")
+                            .setIssuingOrganization("Project Management Institute (PMI)")
+                            .setIssueDate(LocalDate.of(2020, 5, 15))
+                            .setExpiryDate(LocalDate.of(2025, 5, 15))
+                            .setCredentialId("PMI-" + expert.getId() + "123")
+                            .setCredentialUrl("https://www.pmi.org/certifications/verify");
+                    expertCertificationRepository.save(cert1);
+                } else {
+                    ExpertCertification cert2 = new ExpertCertification()
+                            .setId(certIdCounter.getAndIncrement())
+                            .setExpert(expert)
+                            .setName("Certified ScrumMaster (CSM)")
+                            .setIssuingOrganization("Scrum Alliance")
+                            .setIssueDate(LocalDate.of(2019, 8, 10))
+                            .setExpiryDate(LocalDate.of(2024, 8, 10))
+                            .setCredentialId("CSM-" + expert.getId() + "987")
+                            .setCredentialUrl("https://www.scrumalliance.org/verify");
+                    expertCertificationRepository.save(cert2);
+                }
+            }
         }
     }
 }

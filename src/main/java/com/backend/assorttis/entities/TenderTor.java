@@ -27,337 +27,172 @@ import java.util.Map;
 @Entity
 @Table(name = "tender_tors", schema = "public")
 public class TenderTor {
-    private Long id;
-
-    private Tender tender;
-
-    private Integer version;
-
-    private Language language;
-
-    private String status;
-
-    private String title;
-
-    private String referenceCode;
-
-    private LocalDate publicationDate;
-
-    private Integer amendmentNumber;
-
-    private String context;
-
-    private String objectives;
-
-    private String scopeOfWork;
-
-    private String expectedResults;
-
-    private String expectedDeliverables;
-
-    private String methodology;
-
-    private String requiredExpertise;
-
-    private String eligibilityCriteria;
-
-    private Integer experienceRequired;
-
-    private String teamComposition;
-
-    private Boolean keyExpertsRequired;
-
-    private BigDecimal estimatedBudget;
-
-    private String currency;
-
-    private Integer contractDuration;
-
-    private LocalDate startDate;
-
-    private LocalDate endDate;
-
-    private String evaluationMethod;
-
-    private BigDecimal technicalWeight;
-
-    private BigDecimal financialWeight;
-
-    private BigDecimal minimumScoreRequired;
-
-    private String evaluationCriteria;
-
-    private String submissionGuidelines;
-
-    private Instant submissionDeadline;
-
-    private Instant clarificationDeadline;
-
-    private String contactInformation;
-
-    private Country country;
-
-    private City city;
-
-    private Boolean remoteAllowed;
-
-    private Map<String, Object> keywords;
-
-    private String aiSummary;
-
-    private String complexityLevel;
-
-    private BigDecimal visibilityScore;
-
-    private User createdBy;
-
-    private Instant createdAt;
-
-    private Instant updatedAt;
-
     @Id
     @Column(name = "id", nullable = false)
-    public Long getId() {
-        return id;
-    }
+    private Long id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "tender_id", nullable = false)
-    public Tender getTender() {
-        return tender;
-    }
+    private Tender tender;
 
     @NotNull
     @ColumnDefault("1")
     @Column(name = "version", nullable = false)
-    public Integer getVersion() {
-        return version;
-    }
+    private Integer version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "language")
-    public Language getLanguage() {
-        return language;
-    }
+    private Language language;
 
     @Size(max = 50)
     @ColumnDefault("'DRAFT'")
     @Column(name = "status", length = 50)
-    public String getStatus() {
-        return status;
-    }
+    private String status;
 
     @Size(max = 255)
     @Column(name = "title")
-    public String getTitle() {
-        return title;
-    }
+    private String title;
 
     @Size(max = 100)
     @Column(name = "reference_code", length = 100)
-    public String getReferenceCode() {
-        return referenceCode;
-    }
+    private String referenceCode;
 
     @Column(name = "publication_date")
-    public LocalDate getPublicationDate() {
-        return publicationDate;
-    }
+    private LocalDate publicationDate;
 
     @Column(name = "amendment_number")
-    public Integer getAmendmentNumber() {
-        return amendmentNumber;
-    }
+    private Integer amendmentNumber;
 
     @Column(name = "context", length = Integer.MAX_VALUE)
-    public String getContext() {
-        return context;
-    }
+    private String context;
 
     @Column(name = "objectives", length = Integer.MAX_VALUE)
-    public String getObjectives() {
-        return objectives;
-    }
+    private String objectives;
 
     @Column(name = "scope_of_work", length = Integer.MAX_VALUE)
-    public String getScopeOfWork() {
-        return scopeOfWork;
-    }
+    private String scopeOfWork;
 
     @Column(name = "expected_results", length = Integer.MAX_VALUE)
-    public String getExpectedResults() {
-        return expectedResults;
-    }
+    private String expectedResults;
 
     @Column(name = "expected_deliverables", length = Integer.MAX_VALUE)
-    public String getExpectedDeliverables() {
-        return expectedDeliverables;
-    }
+    private String expectedDeliverables;
 
     @Column(name = "methodology", length = Integer.MAX_VALUE)
-    public String getMethodology() {
-        return methodology;
-    }
+    private String methodology;
 
     @Column(name = "required_expertise", length = Integer.MAX_VALUE)
-    public String getRequiredExpertise() {
-        return requiredExpertise;
-    }
+    private String requiredExpertise;
 
     @Column(name = "eligibility_criteria", length = Integer.MAX_VALUE)
-    public String getEligibilityCriteria() {
-        return eligibilityCriteria;
-    }
+    private String eligibilityCriteria;
 
     @Column(name = "experience_required")
-    public Integer getExperienceRequired() {
-        return experienceRequired;
-    }
+    private Integer experienceRequired;   // À utiliser, ne pas ajouter experienceYears
 
     @Column(name = "team_composition", length = Integer.MAX_VALUE)
-    public String getTeamComposition() {
-        return teamComposition;
-    }
+    private String teamComposition;
 
     @ColumnDefault("false")
     @Column(name = "key_experts_required")
-    public Boolean getKeyExpertsRequired() {
-        return keyExpertsRequired;
-    }
+    private Boolean keyExpertsRequired;
 
     @Column(name = "estimated_budget")
-    public BigDecimal getEstimatedBudget() {
-        return estimatedBudget;
-    }
+    private BigDecimal estimatedBudget;
 
     @Size(max = 10)
     @Column(name = "currency", length = 10)
-    public String getCurrency() {
-        return currency;
-    }
+    private String currency;
 
     @Column(name = "contract_duration")
-    public Integer getContractDuration() {
-        return contractDuration;
-    }
+    private Integer contractDuration;
 
     @Column(name = "start_date")
-    public LocalDate getStartDate() {
-        return startDate;
-    }
+    private LocalDate startDate;
 
     @Column(name = "end_date")
-    public LocalDate getEndDate() {
-        return endDate;
-    }
+    private LocalDate endDate;
 
     @Size(max = 100)
     @Column(name = "evaluation_method", length = 100)
-    public String getEvaluationMethod() {
-        return evaluationMethod;
-    }
+    private String evaluationMethod;
 
     @Column(name = "technical_weight", precision = 5, scale = 2)
-    public BigDecimal getTechnicalWeight() {
-        return technicalWeight;
-    }
+    private BigDecimal technicalWeight;
 
     @Column(name = "financial_weight", precision = 5, scale = 2)
-    public BigDecimal getFinancialWeight() {
-        return financialWeight;
-    }
+    private BigDecimal financialWeight;
 
     @Column(name = "minimum_score_required", precision = 5, scale = 2)
-    public BigDecimal getMinimumScoreRequired() {
-        return minimumScoreRequired;
-    }
+    private BigDecimal minimumScoreRequired;
 
     @Column(name = "evaluation_criteria", length = Integer.MAX_VALUE)
-    public String getEvaluationCriteria() {
-        return evaluationCriteria;
-    }
+    private String evaluationCriteria;
 
     @Column(name = "submission_guidelines", length = Integer.MAX_VALUE)
-    public String getSubmissionGuidelines() {
-        return submissionGuidelines;
-    }
+    private String submissionGuidelines;
 
     @Column(name = "submission_deadline")
-    public Instant getSubmissionDeadline() {
-        return submissionDeadline;
-    }
+    private Instant submissionDeadline;   // Utiliser celui-ci, pas de champ deadline supplémentaire
 
     @Column(name = "clarification_deadline")
-    public Instant getClarificationDeadline() {
-        return clarificationDeadline;
-    }
+    private Instant clarificationDeadline;
 
     @Column(name = "contact_information", length = Integer.MAX_VALUE)
-    public String getContactInformation() {
-        return contactInformation;
-    }
+    private String contactInformation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "country_id")
-    public Country getCountry() {
-        return country;
-    }
+    private Country country;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "city_id")
-    public City getCity() {
-        return city;
-    }
+    private City city;
 
     @ColumnDefault("false")
     @Column(name = "remote_allowed")
-    public Boolean getRemoteAllowed() {
-        return remoteAllowed;
-    }
+    private Boolean remoteAllowed;
 
     @Column(name = "keywords")
     @JdbcTypeCode(SqlTypes.JSON)
-    public Map<String, Object> getKeywords() {
-        return keywords;
-    }
+    private Map<String, Object> keywords;
 
     @Column(name = "ai_summary", length = Integer.MAX_VALUE)
-    public String getAiSummary() {
-        return aiSummary;
-    }
+    private String aiSummary;
 
     @Size(max = 50)
     @Column(name = "complexity_level", length = 50)
-    public String getComplexityLevel() {
-        return complexityLevel;
-    }
+    private String complexityLevel;
 
     @Column(name = "visibility_score", precision = 5, scale = 2)
-    public BigDecimal getVisibilityScore() {
-        return visibilityScore;
-    }
+    private BigDecimal visibilityScore;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "created_by")
-    public User getCreatedBy() {
-        return createdBy;
-    }
+    private User createdBy;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+    private Instant updatedAt;
 
+    // ========== NOUVEAUX CHAMPS ==========
+    @Size(max = 50)
+    @Column(name = "type", length = 50)
+    private String type; // CONSULTANT, TECHNICAL_EXPERT, PROJECT_MANAGER, TEAM_LEADER, SPECIALIST, ADVISOR, COORDINATOR, OTHER
+
+    @Size(max = 100)
+    @Column(name = "duration")
+    private String duration; // ex: "6 months", "12 months"
+
+    @Column(name = "in_pipeline")
+    private Boolean inPipeline = false;
 }

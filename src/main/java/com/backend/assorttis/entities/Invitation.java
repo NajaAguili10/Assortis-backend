@@ -40,6 +40,12 @@ public class Invitation {
 
     private String status;
 
+    private String memberRole;
+
+    private String memberDepartment;
+
+    private String memberStatus;
+
     private Instant createdAt;
 
     private Instant respondedAt;
@@ -99,6 +105,25 @@ public class Invitation {
     @Column(name = "status", length = 50)
     public String getStatus() {
         return status;
+    }
+
+    @Size(max = 50)
+    @Column(name = "member_role", length = 50)
+    public String getMemberRole() {
+        return memberRole;
+    }
+
+    @Size(max = 255)
+    @Column(name = "member_department")
+    public String getMemberDepartment() {
+        return memberDepartment;
+    }
+
+    @Size(max = 20)
+    @ColumnDefault("'pending'")
+    @Column(name = "member_status", length = 20)
+    public String getMemberStatus() {
+        return memberStatus;
     }
 
     @ColumnDefault("CURRENT_TIMESTAMP")

@@ -16,5 +16,7 @@ public interface ProjectService {
 
 
     ProjectDetailDTO getProjectById(Long id);
+
+    List<ProjectListDTO> getAllProjects();
 }
 

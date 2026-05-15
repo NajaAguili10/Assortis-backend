@@ -18,6 +18,10 @@ import com.backend.assorttis.entities.OrganizationSectorId;
 import com.backend.assorttis.entities.OrganizationSubsector;
 import com.backend.assorttis.entities.OrganizationSubsectorId;
 import com.backend.assorttis.entities.OrganizationServiceId;
+import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
+import com.backend.assorttis.entities.OrganizationSavedSearch;
+import com.backend.assorttis.entities.User;
+import com.backend.assorttis.mappers.CountryMapper;
 import com.backend.assorttis.mappers.OrganizationMapper;
 import com.backend.assorttis.mappers.SectorMapper;
 import com.backend.assorttis.repository.*;
@@ -29,8 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
+
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationMapper organizationMapper;
@@ -58,7 +65,13 @@ public class OrganizationService {
     private final OrganizationUserRepository organizationUserRepository;
     private final OrganizationSavedSearchRepository savedSearchRepository;
     private final UserRepository userRepository;
+
     private final PartnershipRepository partnershipRepository;
+    private final OrganizationSubscriptionSectorRepository subscriptionSectorRepository;
+    private final OrganizationSubscriptionCountryRepository subscriptionCountryRepository;
+
+    private final SectorMapper sectorMapper;
+    private final CountryMapper countryMapper;
 
     @Transactional(readOnly = true)
     public List<OrganizationDTO> getAllOrganizations() {
@@ -89,6 +102,26 @@ public class OrganizationService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getSubscriptionSectors(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> oss.getSector().getCode())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.backend.assorttis.dto.sector.SectorDTO> getSubscriptionSectorDTOs(Long organizationId) {
+        return subscriptionSectorRepository.findById_OrganizationId(organizationId).stream()
+                .map(oss -> sectorMapper.toSectorDTO(oss.getSector()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryDTO> getSubscriptionCountryDTOs(Long organizationId) {
+        return subscriptionCountryRepository.findById_OrganizationId(organizationId).stream()
+                .map(osc -> countryMapper.toDTO(osc.getCountry()))
+                .collect(Collectors.toList());
+    }
     @Transactional(readOnly = true)
     public OrganizationDTO getCurrentOrganization(String userEmail) {
         return organizationMapper.toDTO(resolveCurrentOrganization(userEmail));
@@ -290,4 +323,38 @@ public class OrganizationService {
         return StringUtils.hasText(value) ? value.trim() : fallback;
     }
 
+
+
+
+    @Transactional(readOnly = true)
+    public Long getOrganizationIdByUserId(Long userId) {
+        return organizationUserRepository.findFirstByUserId(userId)
+                .map(ou -> ou.getOrganization().getId())
+                .orElse(null);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<OrganizationSavedSearchDTO> getSavedSearches(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return savedSearchRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(organizationMapper::toSavedSearchDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public OrganizationSavedSearchDTO saveSearch(Long userId, String name, Map<String, Object> payload) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        OrganizationSavedSearch savedSearch = new OrganizationSavedSearch()
+                .setUser(user)
+                .setName(name)
+                .setPayload(payload)
+                .setCreatedAt(Instant.now());
+        return organizationMapper.toSavedSearchDTO(savedSearchRepository.save(savedSearch));
+    }
+
+    @Transactional
+    public void deleteSavedSearch(Long id) {
+        savedSearchRepository.deleteById(id);
+    }
 }

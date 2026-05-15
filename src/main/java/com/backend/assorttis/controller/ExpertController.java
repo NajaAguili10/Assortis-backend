@@ -1,6 +1,7 @@
 package com.backend.assorttis.controller;
 
 import com.backend.assorttis.dto.expert.ExpertDTO;
+import com.backend.assorttis.dto.expert.ExpertSavedSearchDTO;
 import com.backend.assorttis.dto.expert.ExpertSearchRequest;
 import com.backend.assorttis.dto.expert.ExpertSearchResponse;
 import com.backend.assorttis.service.ExpertService;
@@ -9,14 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/experts")
@@ -60,5 +58,32 @@ public class ExpertController {
             field = "updatedAt";
         }
         return Sort.by(direction, field);
+    }
+
+    @GetMapping("/organization/{orgId}")
+    public ResponseEntity<List<ExpertDTO>> getExpertsByOrganizationId(@org.springframework.web.bind.annotation.PathVariable Long orgId) {
+        return ResponseEntity.ok(expertService.getExpertsByOrganizationId(orgId));
+    }
+
+    @GetMapping("/saved-searches/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ExpertSavedSearchDTO>> getSavedSearches(@org.springframework.web.bind.annotation.PathVariable Long userId) {
+        return ResponseEntity.ok(expertService.getSavedSearches(userId));
+    }
+
+    @PostMapping("/saved-searches/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<com.backend.assorttis.dto.expert.ExpertSavedSearchDTO> saveSearch(
+            @PathVariable Long userId,
+            @RequestParam String name,
+            @RequestBody Map<String, Object> payload) {
+        return ResponseEntity.ok(expertService.saveSearch(userId, name, payload));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/saved-searches/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteSavedSearch(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        expertService.deleteSavedSearch(id);
+        return ResponseEntity.ok().build();
     }
 }

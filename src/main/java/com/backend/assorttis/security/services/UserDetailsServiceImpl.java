@@ -47,8 +47,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                             });
                 });
 
-        Long organizationId = organizationUserRepository.findByUserId(user.getId())
+        Long organizationId = organizationUserRepository.findMembershipsByUserId(user.getId()).stream()
                 .map(ou -> ou.getId().getOrganizationId())
+                .findFirst()
                 .orElse(null);
 
         return UserDetailsImpl.build(user, organizationId, authorities);

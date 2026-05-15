@@ -7,7 +7,7 @@ import java.util.Map;
 @Data
 public class OrganizationSavedSearchDTO {
     private Long id;
-    private String name;
+    private String label;
     private Map<String, Object> payload;
     private Instant createdAt;
 }

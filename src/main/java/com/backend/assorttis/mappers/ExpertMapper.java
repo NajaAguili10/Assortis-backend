@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExpertMapper {
 
-    private final ExpertSectorRepository expertSectorRepository;
+    private final ExpertSubscriptionSectorRepository expertSubscriptionSectorRepository;
     private final ExpertSkillRepository expertSkillRepository;
     private final ExpertLanguageRepository expertLanguageRepository;
     private final ExpertExperienceRepository expertExperienceRepository;
     private final ExpertEducationRepository expertEducationRepository;
+    private final ExpertCertificationRepository expertCertificationRepository;
 
     public ExpertDTO toDTO(Expert expert) {
         if (expert == null) {
@@ -33,6 +34,8 @@ public class ExpertMapper {
         if (expert.getUser() != null) {
             dto.setFirstName(expert.getUser().getFirstName());
             dto.setLastName(expert.getUser().getLastName());
+            dto.setEmail(expert.getUser().getEmail());
+            dto.setPhone(expert.getUser().getPhone());
         }
         
         dto.setCurrentPosition(expert.getCurrentPosition());
@@ -77,9 +80,8 @@ public class ExpertMapper {
 
         // Sectors
         try {
-            List<ExpertSector> expertSectors = expertSectorRepository.findAll();
+            List<ExpertSubscriptionSector> expertSectors = expertSubscriptionSectorRepository.findByExpert(expert);
             dto.setSectors(expertSectors.stream()
-                    .filter(es -> es.getExpert() != null && es.getExpert().getId().equals(expert.getId()))
                     .map(es -> {
                         ExpertSectorDTO sectorDTO = new ExpertSectorDTO();
                         if (es.getSector() != null) {
@@ -146,9 +148,8 @@ public class ExpertMapper {
 
         // Experience
         try {
-            List<ExpertExperience> expertExperiences = expertExperienceRepository.findAll();
+            List<ExpertExperience> expertExperiences = expertExperienceRepository.findByExpert(expert);
             dto.setExperiences(expertExperiences.stream()
-                    .filter(ee -> ee.getExpert() != null && ee.getExpert().getId().equals(expert.getId()))
                     .map(ee -> {
                         ExpertExperienceDTO expDTO = new ExpertExperienceDTO();
                         expDTO.setId(ee.getId());
@@ -166,7 +167,36 @@ public class ExpertMapper {
                     })
                     .collect(Collectors.toList()));
         } catch (Exception e) {}
+        
+        // Certifications
+        try {
+            List<ExpertCertification> certifications = expertCertificationRepository.findByExpert(expert);
+            dto.setCertifications(certifications.stream()
+                    .map(ec -> {
+                        ExpertCertificationDTO certDTO = new ExpertCertificationDTO();
+                        certDTO.setId(ec.getId());
+                        certDTO.setName(ec.getName());
+                        certDTO.setIssuingOrganization(ec.getIssuingOrganization());
+                        certDTO.setIssuerName(ec.getIssuingOrganization()); // For compatibility
+                        certDTO.setIssueDate(ec.getIssueDate());
+                        certDTO.setExpiryDate(ec.getExpiryDate());
+                        certDTO.setCredentialId(ec.getCredentialId());
+                        certDTO.setCredentialUrl(ec.getCredentialUrl());
+                        return certDTO;
+                    })
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {}
 
+        return dto;
+    }
+
+    public com.backend.assorttis.dto.expert.ExpertSavedSearchDTO toSavedSearchDTO(com.backend.assorttis.entities.ExpertSavedSearch savedSearch) {
+        if (savedSearch == null) return null;
+        com.backend.assorttis.dto.expert.ExpertSavedSearchDTO dto = new com.backend.assorttis.dto.expert.ExpertSavedSearchDTO();
+        dto.setId(savedSearch.getId());
+        dto.setLabel(savedSearch.getName());
+        dto.setPayload(savedSearch.getPayload());
+        dto.setCreatedAt(savedSearch.getCreatedAt());
         return dto;
     }
 }

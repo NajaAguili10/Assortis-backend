@@ -77,6 +77,13 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDetailDTO(project);
     }
 
+    @Override
+    public List<ProjectListDTO> getAllProjects() {
+        return projectRepository.findAll().stream()
+                .map(projectMapper::toProjectListDTO)
+                .collect(Collectors.toList());
+    }
+
     private Specification<Project> buildSpecification(ProjectFiltersDTO filters) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -100,7 +107,7 @@ public class ProjectServiceImpl implements ProjectService {
                 predicates.add(root.get("type").in(filters.getType()));
             }
             if (filters.getSector() != null && !filters.getSector().isEmpty()) {
-                predicates.add(root.get("mainSector").get("name").in(filters.getSector()));
+                predicates.add(root.get("mainSector").get("code").in(filters.getSector()));
             }
             if (filters.getRegion() != null && !filters.getRegion().isEmpty()) {
                 predicates.add(root.get("region").in(filters.getRegion()));

@@ -22,6 +22,7 @@ public class ProjectMapper {
     private final ProjectTaskRepository taskRepository;
     private final ProjectOrganizationRepository projectOrganizationRepository;
     private final ProjectTeamAssignmentRepository teamAssignmentRepository;
+    private final ProjectMilestoneRepository milestoneRepository;
 
     public ProjectListDTO toProjectListDTO(Project project) {
         ProjectListDTO dto = new ProjectListDTO();
@@ -31,35 +32,30 @@ public class ProjectMapper {
         dto.setTitle(project.getTitle());
         dto.setName(project.getTitle());
         dto.setDescription(project.getDescription());
-        dto.setStatus(project.getStatus().toString());
-        dto.setPriority(project.getPriority());
-        dto.setType(project.getType());
+        if (project.getStatus() != null) {
+            dto.setStatus(project.getStatus().name());
+        }
+        if (project.getPriority() != null) {
+            dto.setPriority(project.getPriority().name());
+        }
+        if (project.getType() != null) {
+            dto.setType(project.getType().name());
+        }
 
         // Location
         if (project.getCountry() != null) {
-            ProjectListDTO.CountryDTO countryDTO = new ProjectListDTO.CountryDTO();
-            countryDTO.setId(project.getCountry().getId());
-            countryDTO.setName(project.getCountry().getName());
-            countryDTO.setCode(project.getCountry().getCode());
-            dto.setCountry(countryDTO);
+            dto.setCountry(project.getCountry().getName());
         }
 
         if (project.getCity() != null) {
-            ProjectListDTO.CityDTO cityDTO = new ProjectListDTO.CityDTO();
-            cityDTO.setId(project.getCity().getId());
-            cityDTO.setName(project.getCity().getName());
-            dto.setCity(cityDTO);
+            dto.setCity(project.getCity().getName());
         }
 
         dto.setRegion(project.getRegion());
 
         // Sector
         if (project.getMainSector() != null) {
-            ProjectListDTO.SectorDTO sectorDTO = new ProjectListDTO.SectorDTO();
-            sectorDTO.setId(project.getMainSector().getId());
-            sectorDTO.setName(project.getMainSector().getName());
-            sectorDTO.setCode(project.getMainSector().getCode());
-            dto.setMainSector(sectorDTO);
+            dto.setSector(project.getMainSector().getCode());
         }
 
         List<String> subsectorNames = subsectorRepository.findSubsectorNamesByProjectId(project.getId());
@@ -149,7 +145,7 @@ public class ProjectMapper {
         dto.setCountry(listDto.getCountry());
         dto.setCity(listDto.getCity());
         dto.setRegion(listDto.getRegion());
-        dto.setMainSector(listDto.getMainSector());
+        dto.setSector(listDto.getSector());
         dto.setSubsectors(listDto.getSubsectors());
         dto.setBudget(listDto.getBudget());
         dto.setCurrency(listDto.getCurrency());
@@ -172,6 +168,60 @@ public class ProjectMapper {
             dto.setDeliverables(new ArrayList<>(project.getDeliverables().keySet()));
         }
 
+        // Map Team Members
+        List<ProjectTeamAssignment> teamAssignments = teamAssignmentRepository.findByProjectId(project.getId());
+        dto.setTeam(mapTeamMembers(teamAssignments));
+
+        // Map Milestones
+        List<ProjectMilestone> milestones = milestoneRepository.findByProjectId(project.getId());
+        dto.setMilestones(mapMilestones(milestones));
+
         return dto;
+    }
+
+    private List<ProjectDetailDTO.ProjectTeamMemberDTO> mapTeamMembers(List<ProjectTeamAssignment> assignments) {
+        if (assignments == null) return new ArrayList<>();
+        return assignments.stream().map(a -> {
+            ProjectDetailDTO.ProjectTeamMemberDTO m = new ProjectDetailDTO.ProjectTeamMemberDTO();
+            m.setId(a.getId());
+            if (a.getUser() != null) {
+                m.setName(a.getUser().getFirstName() + " " + a.getUser().getLastName());
+                // In a real app, you'd get avatar URL from user profile
+                m.setAvatar(null);
+            }
+            m.setRole(a.getRole());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+
+    private List<ProjectDetailDTO.ProjectMilestoneDTO> mapMilestones(List<ProjectMilestone> milestones) {
+        if (milestones == null) return new ArrayList<>();
+        return milestones.stream().map(m -> {
+            ProjectDetailDTO.ProjectMilestoneDTO dto = new ProjectDetailDTO.ProjectMilestoneDTO();
+            dto.setId(m.getId());
+            dto.setTitle(m.getTitle());
+            dto.setDescription(m.getDescription());
+            dto.setDueDate(m.getDueDate());
+            dto.setStatus(m.getStatus());
+            if (m.getCompletedAt() != null) {
+                dto.setCompletedDate(m.getCompletedAt().atZone(ZoneId.systemDefault()).toLocalDate());
+            }
+            return dto;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+
+    public ProjectSavedSearchDTO toProjectSavedSearchDTO(ProjectSavedSearch entity) {
+        if (entity == null) return null;
+        ProjectSavedSearchDTO dto = new ProjectSavedSearchDTO();
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setPayload(entity.getPayload());
+        dto.setCreatedAt(entity.getCreatedAt());
+        return dto;
+    }
+
+    public List<ProjectSavedSearchDTO> toProjectSavedSearchDTOList(List<ProjectSavedSearch> entities) {
+        if (entities == null) return new ArrayList<>();
+        return entities.stream().map(this::toProjectSavedSearchDTO).collect(java.util.stream.Collectors.toList());
     }
 }

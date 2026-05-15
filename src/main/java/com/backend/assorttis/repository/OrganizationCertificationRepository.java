@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface OrganizationCertificationRepository
         extends JpaRepository<OrganizationCertification, Long>, JpaSpecificationExecutor<OrganizationCertification> {
+    java.util.List<OrganizationCertification> findByOrganizationId(Long organizationId);
 }

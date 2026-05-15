@@ -2,14 +2,19 @@ package com.backend.assorttis.service;
 
 import com.backend.assorttis.dto.partnership.PartnershipDTO;
 import com.backend.assorttis.entities.Organization;
+import com.backend.assorttis.entities.OrganizationUser;
 import com.backend.assorttis.entities.Partnership;
+import com.backend.assorttis.repository.OrganizationUserRepository;
 import com.backend.assorttis.repository.PartnershipProjectRepository;
 import com.backend.assorttis.repository.PartnershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -17,34 +22,61 @@ public class PartnershipService {
 
     private final PartnershipRepository partnershipRepository;
     private final PartnershipProjectRepository partnershipProjectRepository;
+    private final OrganizationUserRepository organizationUserRepository;
 
     @Transactional(readOnly = true)
     public List<PartnershipDTO> getAllPartnerships() {
         return partnershipRepository.findAll().stream()
-                .map(this::toDTO)
+                .map(partnership -> toDTO(partnership, null))
                 .toList();
     }
 
-    private PartnershipDTO toDTO(Partnership partnership) {
+    @Transactional(readOnly = true)
+    public List<PartnershipDTO> getCurrentOrganizationPartnerships(Long userId) {
+        Organization currentOrganization = resolveCurrentOrganization(userId);
+
+        return partnershipRepository.findByOrganizationIdOrPartnerOrganizationId(currentOrganization.getId()).stream()
+                .map(partnership -> toDTO(partnership, currentOrganization.getId()))
+                .toList();
+    }
+
+    private PartnershipDTO toDTO(Partnership partnership, Long currentOrganizationId) {
         Organization organization = partnership.getOrganization();
         Organization partnerOrganization = partnership.getPartnerOrganization();
+        Organization displayOrganization = organization;
+        Organization counterpartOrganization = partnerOrganization;
+
+        if (currentOrganizationId != null
+                && partnerOrganization != null
+                && currentOrganizationId.equals(partnerOrganization.getId())) {
+            displayOrganization = partnerOrganization;
+            counterpartOrganization = organization;
+        }
 
         return PartnershipDTO.builder()
                 .id(partnership.getId())
-                .organizationName(organization != null ? organization.getName() : null)
-                .organizationType(organization != null ? organization.getType() : null)
-                .partnerOrganizationName(partnerOrganization != null ? partnerOrganization.getName() : null)
-                .partnerOrganizationType(partnerOrganization != null ? partnerOrganization.getType() : null)
+                .organizationName(displayOrganization != null ? displayOrganization.getName() : null)
+                .organizationType(displayOrganization != null ? displayOrganization.getType() : null)
+                .partnerOrganizationName(counterpartOrganization != null ? counterpartOrganization.getName() : null)
+                .partnerOrganizationType(counterpartOrganization != null ? counterpartOrganization.getType() : null)
                 .status(partnership.getStatus())
                 .type(partnership.getType())
                 .startDate(partnership.getStartDate())
                 .endDate(partnership.getEndDate())
                 .createdAt(partnership.getCreatedAt())
                 .description(partnership.getDescription())
-                .region(resolveRegion(partnerOrganization, organization))
-                .sector(resolveSector(partnerOrganization, organization))
+                .region(resolveRegion(counterpartOrganization, displayOrganization))
+                .sector(resolveSector(counterpartOrganization, displayOrganization))
                 .projectsCount(partnershipProjectRepository.countByPartnershipId(partnership.getId()))
                 .build();
+    }
+
+    private Organization resolveCurrentOrganization(Long userId) {
+        return organizationUserRepository.findMembershipsByUserId(userId).stream()
+                .filter(membership -> !"inactive".equalsIgnoreCase(nullToEmpty(membership.getMembershipStatus())))
+                .map(OrganizationUser::getOrganization)
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No organization found for user"));
     }
 
     private String resolveRegion(Organization primaryOrganization, Organization fallbackOrganization) {
@@ -97,5 +129,9 @@ public class PartnershipService {
         }
 
         return organization.getMainSector().getCode();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

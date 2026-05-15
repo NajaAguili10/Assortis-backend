@@ -26,15 +26,18 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
     private final ExpertService expertService;
-
-    @GetMapping
-    public List<OrganizationDTO> getAllOrganizations() {
-        return organizationService.getAllOrganizations();
+    
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
     }
+
+
     @GetMapping
     public List<OrganizationDTO> getAllOrganizationsByOrganization() {
         return organizationService.getAllOrganizations();
     }
+
     @GetMapping("/kpis")
     public OrganizationKPIsDTO getKPIs() {
         return organizationService.getKPIs();
@@ -59,28 +62,29 @@ public class OrganizationController {
     public List<String> getSubscriptionSectors(@PathVariable Long orgId) {
         return organizationService.getSubscriptionSectors(orgId);
     }
-   /* @GetMapping("/filters")
-    public OrganizationFiltersDataDTO getFiltersData() {
-        return organizationService.getFiltersData();
 
-*/
-/*   @GetMapping("/my-subscription-sectors")
-   @PreAuthorize("isAuthenticated()")
-   public List<SectorDTO> getMySubscriptionSectors() {
-       UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-       Long userId = userDetails.getId();
+    /* @GetMapping("/filters")
+       public OrganizationFiltersDataDTO getFiltersData() {
+           return organizationService.getFiltersData();
 
-       // Try organization first
-       Long orgId = organizationService.getOrganizationIdByUserId(userId);
-       if (orgId != null) {
-           return organizationService.getSubscriptionSectorDTOs(orgId);
-       }
+   */
+    @GetMapping("/my-subscription-sectors")
+    @PreAuthorize("isAuthenticated()")
+    public List<SectorDTO> getMySubscriptionSectors() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userDetails.getId();
+
+        // Try organization first
+        Long orgId = organizationService.getOrganizationIdByUserId(userId);
+        if (orgId != null) {
+            return organizationService.getSubscriptionSectorDTOs(orgId);
+        }
 
 
 
-       // Return empty list instead of throwing exception
-       return new ArrayList<>();
-   }
+        // Return empty list instead of throwing exception
+        return new ArrayList<>();
+    }
 
     @GetMapping("/my-subscription-countries")
     @PreAuthorize("isAuthenticated()")
@@ -95,18 +99,25 @@ public class OrganizationController {
     }
 
     @GetMapping("/saved-searches/{userId}")
-    public List<OrganizationSavedSearchDTO> getSavedSearches(@PathVariable Long userId) {
+    @PreAuthorize("isAuthenticated()")
+    public List<OrganizationSavedSearchDTO> getSavedSearches(@PathVariable("userId") Long userId) {
+        System.out.println("GET /saved-searches/" + userId);
         return organizationService.getSavedSearches(userId);
     }
 
     @PostMapping("/saved-searches/{userId}")
-    public OrganizationSavedSearchDTO saveSearch(@PathVariable Long userId, @RequestParam String name, @RequestBody Map<String, Object> payload) {
+    @PreAuthorize("isAuthenticated()")
+    public OrganizationSavedSearchDTO saveSearch(@PathVariable("userId") Long userId, @RequestParam("name") String name, @RequestBody Map<String, Object> payload) {
+        System.out.println("POST /saved-searches/" + userId + " name: " + name);
         return organizationService.saveSearch(userId, name, payload);
     }
 
     @DeleteMapping("/saved-searches/{id}")
+    @PreAuthorize("isAuthenticated()")
     public void deleteSavedSearch(@PathVariable Long id) {
+        System.out.println("DELETE /saved-searches/" + id);
         organizationService.deleteSavedSearch(id);
     }
- */
+
+
 }

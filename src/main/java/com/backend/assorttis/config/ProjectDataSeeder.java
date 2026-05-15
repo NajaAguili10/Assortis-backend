@@ -1,7 +1,9 @@
 package com.backend.assorttis.config;
 
 import com.backend.assorttis.entities.*;
+import com.backend.assorttis.entities.enums.project.ProjectPriorityEnum;
 import com.backend.assorttis.entities.enums.project.ProjectStatus;
+import com.backend.assorttis.entities.enums.project.ProjectTypeEnum;
 import com.backend.assorttis.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -186,8 +188,8 @@ public class ProjectDataSeeder implements CommandLineRunner {
                 .setTitle(title)
                 .setDescription(desc)
                 .setStatus(ProjectStatus.valueOf(status))
-                .setPriority(priority)
-                .setType(type)
+                .setPriority(ProjectPriorityEnum.valueOf(priority))
+                .setType(ProjectTypeEnum.valueOf(type))
                 .setDonor(donor)
                 .setFundingType(fundingType)
                 .setBudget(budget)

@@ -1,6 +1,8 @@
 package com.backend.assorttis.entities;
 
+import com.backend.assorttis.entities.enums.project.ProjectPriorityEnum;
 import com.backend.assorttis.entities.enums.project.ProjectStatus;
+import com.backend.assorttis.entities.enums.project.ProjectTypeEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -66,9 +68,9 @@ public class Project {
 
     private BigDecimal estimatedShare;
 
-    private String priority;
+    private ProjectPriorityEnum  priority;
 
-    private String type;
+    private ProjectTypeEnum type;
 
     private Sector mainSector;
 
@@ -191,15 +193,15 @@ public class Project {
         return estimatedShare;
     }
 
-    @Size(max = 20)
+    @Enumerated(EnumType.STRING)
     @Column(name = "priority", length = 20)
-    public String getPriority() {
+    public ProjectPriorityEnum getPriority() {
         return priority;
     }
 
-    @Size(max = 50)
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 50)
-    public String getType() {
+    public ProjectTypeEnum getType() {
         return type;
     }
 

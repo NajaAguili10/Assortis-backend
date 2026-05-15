@@ -2,6 +2,7 @@ package com.backend.assorttis.mappers;
 
 import com.backend.assorttis.dto.organization.OrganizationCertificationDTO;
 import com.backend.assorttis.dto.organization.OrganizationDTO;
+import com.backend.assorttis.dto.organization.OrganizationSavedSearchDTO;
 import com.backend.assorttis.dto.sector.SubsectorDTO;
 import com.backend.assorttis.entities.*;
 import com.backend.assorttis.entities.enums.project.ProjectStatus;
@@ -25,6 +26,7 @@ public class OrganizationMapper {
     private final PartnershipRepository partnershipRepository;
     private final OrganizationCertificationRepository organizationCertificationRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final OrganizationSubscriptionSectorRepository organizationSubscriptionSectorRepository;
 
     @Autowired
     public OrganizationMapper(ProjectOrganizationRepository projectOrganizationRepository,
@@ -35,7 +37,8 @@ public class OrganizationMapper {
                               OrganizationServiceRepository organizationServiceRepository,
                               PartnershipRepository partnershipRepository,
                               OrganizationCertificationRepository organizationCertificationRepository,
-                              TeamMemberRepository teamMemberRepository) {
+                              TeamMemberRepository teamMemberRepository,
+                              OrganizationSubscriptionSectorRepository organizationSubscriptionSectorRepository) {
         this.projectOrganizationRepository = projectOrganizationRepository;
         this.projectRepository = projectRepository;
         this.organizationSectorRepository = organizationSectorRepository;
@@ -45,6 +48,7 @@ public class OrganizationMapper {
         this.partnershipRepository = partnershipRepository;
         this.organizationCertificationRepository = organizationCertificationRepository;
         this.teamMemberRepository = teamMemberRepository;
+        this.organizationSubscriptionSectorRepository = organizationSubscriptionSectorRepository;
     }
 
     public OrganizationDTO toDTO(Organization organization) {
@@ -207,9 +211,8 @@ public class OrganizationMapper {
         }
 
         try {
-            List<OrganizationCertification> certs = organizationCertificationRepository.findAll();
+            List<OrganizationCertification> certs = organizationCertificationRepository.findByOrganizationId(organization.getId());
             List<OrganizationCertificationDTO> certDtos = certs.stream()
-                .filter(c -> c.getOrganization() != null && c.getOrganization().getId().equals(organization.getId()))
                 .map(c -> {
                     OrganizationCertificationDTO cDto = new OrganizationCertificationDTO();
                     cDto.setId(c.getId());
@@ -225,7 +228,8 @@ public class OrganizationMapper {
                 .toList();
             dto.setCertifications(certDtos);
         } catch (Exception e) {
-            // ignore
+            System.err.println("Error mapping certifications: " + e.getMessage());
+            dto.setCertifications(new java.util.ArrayList<>());
         }
 
         try {
@@ -240,9 +244,8 @@ public class OrganizationMapper {
         }
 
         try {
-            List<OrganizationSector> orgSectors = organizationSectorRepository.findAll();
-            List<OrganizationDTO.SectorDTO> mappedSectors = orgSectors.stream()
-                .filter(os -> os.getOrganization() != null && os.getOrganization().getId().equals(organization.getId()))
+            List<OrganizationSubscriptionSector> subSectors = organizationSubscriptionSectorRepository.findById_OrganizationId(organization.getId());
+            List<OrganizationDTO.SectorDTO> mappedSectors = subSectors.stream()
                 .map(os -> os.getSector())
                 .filter(s -> s != null)
                 .map(s -> {
@@ -302,6 +305,16 @@ public class OrganizationMapper {
             // ignore
         }
 
+        return dto;
+    }
+
+    public OrganizationSavedSearchDTO toSavedSearchDTO(OrganizationSavedSearch savedSearch) {
+        if (savedSearch == null) return null;
+        OrganizationSavedSearchDTO dto = new OrganizationSavedSearchDTO();
+        dto.setId(savedSearch.getId());
+        dto.setLabel(savedSearch.getName());
+        dto.setPayload(savedSearch.getPayload());
+        dto.setCreatedAt(savedSearch.getCreatedAt());
         return dto;
     }
 }
