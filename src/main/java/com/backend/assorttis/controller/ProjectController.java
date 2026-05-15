@@ -2,16 +2,26 @@ package com.backend.assorttis.controller;
 
 
  import com.backend.assorttis.dto.project.*;
+import com.backend.assorttis.entities.enums.project.ProjectPriorityEnum;
+import com.backend.assorttis.entities.enums.project.ProjectStatus;
+import com.backend.assorttis.entities.enums.project.ProjectTypeEnum;
 import com.backend.assorttis.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -45,17 +55,20 @@ public class ProjectController {
         // Build filters DTO from request parameters
         ProjectFiltersDTO filters = new ProjectFiltersDTO();
         filters.setSearchQuery(searchQuery);
-        filters.setStatus(status != null ? List.of(status.split(",")) : null);
-        filters.setPriority(priority != null ? List.of(priority.split(",")) : null);
-        filters.setType(type != null ? List.of(type.split(",")) : null);
-        filters.setSector(sector != null ? List.of(sector.split(",")) : null);
-        filters.setSubsector(subsector != null ? List.of(subsector.split(",")) : null);
-        filters.setRegion(region != null ? List.of(region.split(",")) : null);
+        filters.setStatus(parseEnumList(status, ProjectStatus.class, "status"));
+        filters.setPriority(parseEnumList(priority, ProjectPriorityEnum.class, "priority"));
+        filters.setType(parseEnumList(type, ProjectTypeEnum.class, "type"));
+        filters.setSector(parseCsv(sector));
+        filters.setSubsector(parseCsv(subsector));
+        filters.setRegion(parseCsv(region));
         filters.setMinBudget(minBudget != null ? BigDecimal.valueOf(minBudget) : null);
         filters.setMaxBudget(maxBudget != null ? BigDecimal.valueOf(maxBudget) : null);
-        // dates parsing omitted for brevity (use LocalDate.parse)
-        filters.setLeadOrganization(leadOrganization != null ? List.of(leadOrganization.split(",")) : null);
-        filters.setPartners(partners != null ? List.of(partners.split(",")) : null);
+        filters.setStartDateFrom(parseDate(startDateFrom, "startDateFrom"));
+        filters.setStartDateTo(parseDate(startDateTo, "startDateTo"));
+        filters.setEndDateFrom(parseDate(endDateFrom, "endDateFrom"));
+        filters.setEndDateTo(parseDate(endDateTo, "endDateTo"));
+        filters.setLeadOrganization(parseCsv(leadOrganization));
+        filters.setPartners(parseCsv(partners));
 
         Pageable pageable = PageRequest.of(page, size, parseSort(sortBy));
         PaginatedResponseDTO<ProjectListDTO> result = projectService.getProjects(filters, sortBy, pageable);
@@ -69,14 +82,14 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getKPIs());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProjectDetailDTO> getProjectById(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.getProjectById(id));
-    }
-
     @GetMapping("/all")
     public ResponseEntity<List<ProjectListDTO>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectDetailDTO> getProjectById(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.getProjectById(id));
     }
 
     private Sort parseSort(String sortBy) {
@@ -117,5 +130,53 @@ public class ProjectController {
     public ResponseEntity<Void> deleteSavedSearch(@PathVariable Long id) {
         savedSearchService.deleteSavedSearch(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private List<String> parseCsv(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        List<String> values = Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
+        return values.isEmpty() ? null : values;
+    }
+
+    private <E extends Enum<E>> List<E> parseEnumList(String raw, Class<E> enumType, String parameterName) {
+        List<String> values = parseCsv(raw);
+        if (values == null) {
+            return null;
+        }
+
+        return values.stream()
+                .map(value -> parseEnum(value, enumType, parameterName))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private <E extends Enum<E>> E parseEnum(String value, Class<E> enumType, String parameterName) {
+        try {
+            return Enum.valueOf(enumType, value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid " + parameterName + " value: " + value
+            );
+        }
+    }
+
+    private LocalDate parseDate(String raw, String parameterName) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(raw.trim());
+        } catch (DateTimeParseException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid " + parameterName + " value: " + raw
+            );
+        }
     }
 }

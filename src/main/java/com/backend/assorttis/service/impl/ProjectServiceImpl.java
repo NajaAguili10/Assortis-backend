@@ -4,6 +4,7 @@ package com.backend.assorttis.service.impl;
 import com.backend.assorttis.dto.project.*;
 import com.backend.assorttis.entities.Project;
 import com.backend.assorttis.entities.ProjectSubsector;
+import com.backend.assorttis.entities.enums.project.ProjectPriorityEnum;
 import com.backend.assorttis.entities.enums.project.ProjectStatus;
 import com.backend.assorttis.mappers.ProjectMapper;
 import com.backend.assorttis.repository.*;
@@ -65,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
         kpis.setTotalBudget(projectRepository.sumTotalBudget());
         kpis.setBudgetSpent(calculateTotalSpentBudget());
         kpis.setAverageCompletion(calculateAverageCompletion());
-        kpis.setUrgentProjects(projectRepository.countByPriority("URGENT"));
+        kpis.setUrgentProjects(projectRepository.countByPriority(ProjectPriorityEnum.URGENT));
         return kpis;
     }
 

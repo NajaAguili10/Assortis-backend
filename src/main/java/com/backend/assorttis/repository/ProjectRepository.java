@@ -1,6 +1,7 @@
 package com.backend.assorttis.repository;
 
 import com.backend.assorttis.entities.Project;
+import com.backend.assorttis.entities.enums.project.ProjectPriorityEnum;
 import com.backend.assorttis.entities.enums.project.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -13,7 +14,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
     Long countByStatus(ProjectStatus status);
 
     // ✅ Count urgent projects
-    Long countByPriority(String priority);
+    Long countByPriority(ProjectPriorityEnum priority);
 
     // ✅ Total budget
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(p.budget), 0) FROM Project p")
